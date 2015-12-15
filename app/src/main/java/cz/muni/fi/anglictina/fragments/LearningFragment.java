@@ -39,9 +39,6 @@ import cz.muni.fi.anglictina.db.model.Word;
 public class LearningFragment extends Fragment implements TextToSpeech.OnInitListener {
     public static final long DAY = 10;//60 * 60 * 24;
     private float mSkill;
-    //    private float mCurrentWordDiff;
-//    private int mCurrentWordLearnedCount;
-    //    private int position;
     private Button a;
     private Button b;
     private Button c;
@@ -49,13 +46,11 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private TextView mWord;
     private TextView mPron;
     private SQLiteDatabase mWordsDb;
-    //    private String translation;
     private TextToSpeech tts;
     private TextView mViewSkill;
     private TextView mChance;
     private SharedPreferences mPreferences;
     private List<Word> mWords;
-    //    private long mCurrentWordLastInterval;
     boolean repeating;
     private Word mCurrentWord;
     private int direction;
@@ -171,6 +166,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     //    #F44336 red
 //    #8BC34A green
 
+    /**
+     * Fill screen with new data. If there is word for repeating or using new word and distractors
+     */
     public void next() {
         getView().setBackgroundColor(Color.WHITE);
         a.setClickable(true);
@@ -188,15 +186,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             getNewWord();
         }
 
-
-
-
-
         getDistractorsSimilarDifficulty();
 
-
-        Collections.shuffle(mWords);
-        mWords = mWords.subList(0, 3);
         mWords.add(mCurrentWord);
         direction = getDirection();
         if (direction == 0) { //direction en-cz
@@ -250,6 +241,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         }
     }
 
+    /**
+     * Listener for checking if user answered correctly and updating database
+     */
     private class OnButtonClickListener implements Button.OnClickListener {
         @Override
         public void onClick(View v) {
@@ -364,6 +358,15 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
     }
 
+    /**
+     * Computes when current word should be reviewed.
+     *
+     * @param correct true if user answered correctly
+     * @param count how many times user answered to this word
+     * @param mozno placeholder
+     * @return time in seconds when current word should be reviewed
+     *          For debug purposes returns current time + 10 seconds
+     */
     public long computeRepeatTime(boolean correct, int count, int mozno) {
         return getTimeSeconds() + 10;
 //        if (!correct) return getTimeSeconds() + DAY;
@@ -375,6 +378,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        }
     }
 
+    /**
+     * Checks if there is some word that should be reviewed
+     * @return true if there is word that should be reviewed, false otherwise
+     */
     public boolean checkToRepeat() {
         Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
                 LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
@@ -396,6 +403,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         }
     }
 
+    /**
+     * Gets new word for user. Only when there's no word for reviewing
+     */
     public void getNewWord() {
         repeating = false;
         Cursor currentCursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME + " WHERE " +
@@ -418,6 +428,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         currentCursor.close();
     }
 
+    /**
+     * Initializes text to speech engine
+     * @param status status of text to speech engine
+     */
     @Override
     public void onInit(int status) {
         if (status != TextToSpeech.ERROR) {
@@ -425,15 +439,26 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         }
     }
 
+    /**
+     * Randomly selects direction of translation: cz-en || en-cz
+     * @return 0 for en-cz, 1 for cz-en
+     */
     public int getDirection() {
         Random r = new Random(System.nanoTime());
         return r.nextInt(2);
     }
 
+    /**
+     * Gets current time in seconds
+     * @return current time in seconds
+     */
     public long getTimeSeconds() {
         return System.currentTimeMillis() / 1000;
     }
 
+    /**
+     * Gets 3 distractors based on similar difficulty and users skill
+     */
     public void getDistractorsSimilarDifficulty() {
         float magic = 0.1f;
         Cursor cursor;
@@ -480,6 +505,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 mWords.add(w);
             } while (cursor.moveToNext());
             cursor.close();
+            Collections.shuffle(mWords);
+            mWords = mWords.subList(0, 3);
         } else {
             Toast.makeText(getActivity(), "Error while loading new word. Please restart app", Toast.LENGTH_LONG).show();
         }
