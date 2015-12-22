@@ -4,14 +4,22 @@ import android.content.Context;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.View.OnTouchListener;
 
 public abstract class OnSwipeTouchListener implements OnTouchListener {
 
     public final GestureDetector gestureDetector;
+    private boolean onDown;
+    private View mView;
 
-    public OnSwipeTouchListener (Context ctx){
+    public OnSwipeTouchListener (Context ctx, boolean onDown){
         gestureDetector = new GestureDetector(ctx, new GestureListener());
+        this.onDown = onDown;
+    }
+
+    public void setView(View view) {
+        mView = view;
     }
 
     private final class GestureListener extends SimpleOnGestureListener {
@@ -21,7 +29,27 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
 
         @Override
         public boolean onDown(MotionEvent e) {
+            return onDown;
+        }
+
+
+
+
+//        @Override
+//        public boolean onSingleTapConfirmed(MotionEvent e) {
+//            onClick(mView);
+//            return true;
+//        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            onClick(mView);
             return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            onLongClick(mView);
         }
 
         @Override
@@ -33,7 +61,8 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
                 if (Math.abs(diffX) > Math.abs(diffY)) {
                     if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
                         if (diffX > 0) {
-                            onSwipeRight();
+//                            onSwipeRight();
+                            onSwipeLeft();
                         } else {
                             onSwipeLeft();
                         }
@@ -42,9 +71,9 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
                 }
                 else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                     if (diffY > 0) {
-                        onSwipeBottom();
+//                        onSwipeBottom();
                     } else {
-                        onSwipeTop();
+//                        onSwipeTop();
                     }
                 }
                 result = true;
@@ -56,15 +85,21 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
         }
     }
 
-    public void onSwipeRight() {
-    }
+//    public void onSwipeRight() {
+//    }
 
     public void onSwipeLeft() {
     }
 
-    public void onSwipeTop() {
+    public void onClick(View v){
+    }
+    public void onLongClick(View v) {
+
     }
 
-    public void onSwipeBottom() {
-    }
+//    public void onSwipeTop() {
+//    }
+//
+//    public void onSwipeBottom() {
+//    }
 }

@@ -26,6 +26,7 @@ public class MainFragment extends Fragment {
     private SharedPreferences mPreferences;
     private TextView mSkill;
     private CircularProgressView mSkillProgress;
+    private int i;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

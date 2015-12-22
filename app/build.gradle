@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "cz.muni.fi.anglictina"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -17,6 +17,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+
 }
 
 dependencies {
@@ -27,4 +31,6 @@ dependencies {
     compile 'com.android.support:support-v4:23.1.0'
     compile 'com.android.support:preference-v7:23.1.0'
     compile 'com.github.rahatarmanahmed:circularprogressview:2.4.0'
+    compile 'com.github.medyo:fancybuttons:1.5'
+    compile 'com.github.vajro:MaterialDesignLibrary:1.6'
 }

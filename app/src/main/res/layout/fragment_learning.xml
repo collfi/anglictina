@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout android:id="@+id/learning_layout"
-                xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:app="http://schemas.android.com/apk/res-auto"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+<RelativeLayout
+    android:id="@+id/learning_layout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fancy="http://schemas.android.com/tools"
+    xmlns:fbutton="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
     <!--<android.support.design.widget.AppBarLayout-->
     <!--android:layout_height="wrap_content"-->
     <!--android:layout_width="match_parent"-->
@@ -30,26 +32,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/word"
-        android:gravity="center"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
+        android:gravity="center"
         android:textSize="20sp"/>
+
     <TextView
+        android:id="@+id/skill"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/pronunciation"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
-        android:textSize="44sp"
-        android:id="@+id/skill"
-        android:layout_centerHorizontal="true"/>
+        android:textSize="44sp"/>
+
     <TextView
+        android:id="@+id/chance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/button_a"
+        android:layout_above="@+id/warning"
         android:layout_centerHorizontal="true"
-        android:id="@+id/chance"
-        android:textSize="44sp"
-        android:layout_marginBottom="20dp"/>
+        android:textSize="44sp"/>
+
+    <TextView
+        android:id="@+id/warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button_a"
+        android:gravity="center"
+        android:text="@string/tip_warning"/>
 
     <Button
         android:id="@+id/button_d"
@@ -100,14 +111,14 @@
         android:layout_marginRight="15dp"
         android:textAllCaps="false"
         android:textSize="18sp"/>
-    <!--<Spinner-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:layout_above="@id/button_a"-->
-    <!--android:id="@+id/spinner"/>-->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/foreground"/>
+
+    <com.gc.materialdesign.views.ButtonRectangle
+        android:layout_width="160dp"
+        android:layout_height="72dp"
+        android:id="@+id/button"
+        android:background="#660000"
+        android:layout_centerInParent="true"
+        android:text="capitalist"
+        android:textColor="#000000"/>
 
 </RelativeLayout>
