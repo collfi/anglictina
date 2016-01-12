@@ -8,7 +8,7 @@
     android:layout_height="match_parent">
 
     <fragment
-        android:id="@+id/apps_fragment"
+        android:id="@+id/learning_fragment"
         android:name="cz.muni.fi.anglictina.fragments.LearningFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

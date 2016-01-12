@@ -17,6 +17,7 @@ public class WordContract {
         public static final String COLUMN_NAME_DIFFICULTY = "difficulty";
         public static final String COLUMN_NAME_LEARNED_COUNT = "learned_count";
         public static final String COLUMN_NAME_LEARNED = "learned";
+        public static final String COLUMN_NAME_CATEGORIES = "categories";
     }
 
     public static abstract class LearnedWordEntry implements BaseColumns {
@@ -28,6 +29,7 @@ public class WordContract {
         public static final String COLUMN_NAME_DIFFICULTY = "difficulty";
         public static final String COLUMN_NAME_TIME_TO_REPEAT = "repeatAt";
         public static final String COLUMN_NAME_LAST_INTERVAL = "lastInterval";
+        public static final String COLUMN_NAME_CATEGORIES = "categories";
     }
 
 }

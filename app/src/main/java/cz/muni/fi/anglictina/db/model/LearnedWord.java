@@ -8,8 +8,9 @@ public class LearnedWord {
     private long timeToRepeat;
 //    private float difficulty;
     private long lastInterval;
-    private String translations;
+    private String[] translations;
     private String pronuanciation;
+    private String[] categories;
     //slovny druh a ine charakteristiky na vybranie distraktorov
 
 
@@ -45,19 +46,27 @@ public class LearnedWord {
         this.lastInterval = lastInterval;
     }
 
-    public String getTranslations() {
-        return translations;
-    }
-
-    public void setTranslations(String translations) {
-        this.translations = translations;
-    }
-
     public String getPronuanciation() {
         return pronuanciation;
     }
 
     public void setPronuanciation(String pronuanciation) {
         this.pronuanciation = pronuanciation;
+    }
+
+    public String[] getTranslations() {
+        return translations;
+    }
+
+    public void setTranslations(String[] translations) {
+        this.translations = translations;
+    }
+
+    public String[] getCategories() {
+        return categories;
+    }
+
+    public void setCategories(String[] categories) {
+        this.categories = categories;
     }
 }

@@ -4,8 +4,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import cz.muni.fi.anglictina.db.WordContract.WordEntry;
 import cz.muni.fi.anglictina.db.WordContract.LearnedWordEntry;
+import cz.muni.fi.anglictina.db.WordContract.WordEntry;
 
 
 /**
@@ -17,11 +17,16 @@ public class WordDbHelper extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "words.db";
 
     private static final String CREATE_WORD_TABLE = "CREATE TABLE " + WordEntry.TABLE_NAME + " (" +
-            WordEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY, " + WordEntry.COLUMN_NAME_WORD +
-            " TEXT , " + WordEntry.COLUMN_NAME_TRANSLATIONS + " TEXT, " + WordEntry.COLUMN_NAME_FREQUENCY +
-            " INTEGER, " + WordEntry.COLUMN_NAME_PERCENTIL + " INTEGER, " + WordEntry.COLUMN_NAME_DIFFICULTY
-            + " REAL, " + WordEntry.COLUMN_NAME_LEARNED_COUNT + " INTEGER, " +
-            WordEntry.COLUMN_NAME_LEARNED + " INTEGER, " + WordEntry.COLUMN_NAME_PRONUNCIATION + " TEXT);";
+            WordEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY, " +
+            WordEntry.COLUMN_NAME_WORD + " TEXT , " +
+            WordEntry.COLUMN_NAME_TRANSLATIONS + " TEXT, " +
+            WordEntry.COLUMN_NAME_FREQUENCY + " INTEGER, " +
+            WordEntry.COLUMN_NAME_PERCENTIL + " INTEGER, " +
+            WordEntry.COLUMN_NAME_DIFFICULTY + " REAL, " +
+            WordEntry.COLUMN_NAME_LEARNED_COUNT + " INTEGER, " +
+            WordEntry.COLUMN_NAME_LEARNED + " INTEGER, " +
+            WordEntry.COLUMN_NAME_CATEGORIES + " TEXT, " +
+            WordEntry.COLUMN_NAME_PRONUNCIATION + " TEXT);";
 
     private static final String CREATE_LEARNED_WORD_TABLE = "CREATE TABLE " + LearnedWordEntry.TABLE_NAME +
             " (" + LearnedWordEntry.COLUMN_NAME_ID + " INTEGER PRIMARY KEY, " +
@@ -30,6 +35,7 @@ public class WordDbHelper extends SQLiteOpenHelper {
             LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " REAL, " +
             LearnedWordEntry.COLUMN_NAME_PRONUNCIATION + " TEXT, " +
             LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL + " INTEGER, " +
+            LearnedWordEntry.COLUMN_NAME_CATEGORIES + " TEXT, " +
             LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " INTEGER);";
 
     public WordDbHelper(Context context) {

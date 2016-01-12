@@ -29,7 +29,7 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
 
         @Override
         public boolean onDown(MotionEvent e) {
-            return onDown;
+            return onViewDown(mView);
         }
 
 
@@ -87,6 +87,8 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
 
 //    public void onSwipeRight() {
 //    }
+
+    abstract public boolean onViewDown(View v);
 
     public void onSwipeLeft() {
     }

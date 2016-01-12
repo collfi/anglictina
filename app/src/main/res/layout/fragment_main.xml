@@ -81,5 +81,12 @@
         android:text="Start"
         android:textAllCaps="false"
         android:textSize="18sp"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/delete_db"
+        android:text="deleteDB"
+        android:layout_centerInParent="true"
+        android:onClick="deleteDb"/>
 </RelativeLayout>
 

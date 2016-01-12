@@ -17,14 +17,16 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,10 +42,13 @@ import cz.muni.fi.anglictina.db.WordContract.WordEntry;
 import cz.muni.fi.anglictina.db.WordDbHelper;
 import cz.muni.fi.anglictina.db.model.Word;
 import cz.muni.fi.anglictina.utils.OnSwipeTouchListener;
+import cz.muni.fi.anglictina.utils.WordLevenshteinComparator;
+import cz.muni.fi.anglictina.utils.adapters.TranslationsAdapter;
 
 /**
  * Created by collfi on 27. 10. 2015.
  */
+//todo nasobny bolo 2x v moznostiach???
 public class LearningFragment extends Fragment implements TextToSpeech.OnInitListener {
     public static final long DAY = 10;//60 * 60 * 24;
     private float mSkill;
@@ -63,6 +68,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private Word mCurrentWord;
     private int direction;
     private Handler mHandler;
+    private static View longClicked;
 //    private OnButtonClickListener l;
 
     String[] projection = {WordContract.WordEntry.COLUMN_NAME_ID, WordContract.WordEntry.COLUMN_NAME_WORD,
@@ -136,27 +142,43 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        d.setOnClickListener(l);
 
         mViewSkill.setText(String.valueOf(mSkill));
-        mWord.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT < 21) {
-                    tts.speak(mWord.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-                } else {
-                    tts.speak(mWord.getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
-                }
-            }
-        });
-        View.OnLongClickListener ll = new View.OnLongClickListener() {
+        mWord.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (Build.VERSION.SDK_INT < 21) {
-                    tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
+                if (direction == 0) {
+                    if (Build.VERSION.SDK_INT < 21) {
+                        tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
+                    } else {
+                        tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
+                    }
                 } else {
-                    tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
+                    TranslationsDialogFragment.newInstance(mCurrentWord.getTranslations(), 4).
+                            show(getFragmentManager(), "translations");
                 }
                 return true;
             }
-        };
+        });
+//        mWord.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (Build.VERSION.SDK_INT < 21) {
+//                    tts.speak(mWord.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
+//                } else {
+//                    tts.speak(mWord.getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
+//                }
+//            }
+//        });
+//        View.OnLongClickListener ll = new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                if (Build.VERSION.SDK_INT < 21) {
+//                    tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
+//                } else {
+//                    tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
+//                }
+//                return true;
+//            }
+//        };
 //        a.setOnLongClickListener(ll);
 //        b.setOnLongClickListener(ll);
 //        c.setOnLongClickListener(ll);
@@ -171,9 +193,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        OnSwipeTouchListener forButtons = new OnSwipeTouchListener(getActivity(), false) {
+        OnSwipeTouchListener onSwipeTouchListener = new OnSwipeTouchListener(getActivity(), false) {
 //            public void onSwipeTop() {
 //                Toast.makeText(getActivity(), "top", Toast.LENGTH_SHORT).show();
 //            }
@@ -182,16 +204,36 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //                Toast.makeText(getActivity(), "right", Toast.LENGTH_SHORT).show();
 //            }
 
+            @Override
+            public boolean onViewDown(View v) {
+                return view.equals(v);
+            }
 
             @Override
             public void onClick(View v) {
+                if (!(v instanceof Button)) return;
                 answer(v);
             }
 
             @Override
             public void onLongClick(View v) {
-
-                if (v instanceof Button) {
+                if (!(v instanceof Button)) return;
+                longClicked = v;
+                if (direction == 0) {
+                    if (v.equals(a)) {
+                        TranslationsDialogFragment.newInstance(mWords.get(0).getTranslations(), 0).
+                                show(getFragmentManager(), "translations");
+                    } else if (v.equals(b)) {
+                        TranslationsDialogFragment.newInstance(mWords.get(1).getTranslations(), 1).
+                                show(getFragmentManager(), "translations");
+                    } else if (v.equals(c)) {
+                        TranslationsDialogFragment.newInstance(mWords.get(2).getTranslations(), 2).
+                                show(getFragmentManager(), "translations");
+                    } else if (v.equals(d)) {
+                        TranslationsDialogFragment.newInstance(mWords.get(3).getTranslations(), 3).
+                                show(getFragmentManager(), "translations");
+                    }
+                } else {
                     if (Build.VERSION.SDK_INT < 21) {
                         tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
                     } else {
@@ -200,6 +242,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 }
             }
 
+            @Override
             public void onSwipeLeft() {
                 highlightCorrect();
                 makeButtonsUnclickable();
@@ -236,7 +279,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                     cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
                     cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
                     cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, mCurrentWord.getTranslations());
+                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
+                    cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
                     mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
                 } else {
 
@@ -251,93 +295,98 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                     mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
                 }
 
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        next();
-
-                    }
-                }, 1000);
+                new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
             }
 //            public void onSwipeBottom() {
 //                Toast.makeText(getActivity(), "bottom", Toast.LENGTH_SHORT).show();
 //            }
 
             public boolean onTouch(View v, MotionEvent event) {
-                setView(v);
-                return gestureDetector.onTouchEvent(event);
-            }
-        };
-        OnSwipeTouchListener forView = new OnSwipeTouchListener(getActivity(), true) {
-            public void onSwipeLeft() {
-                highlightCorrect();
-                makeButtonsUnclickable();
-                boolean correct;
-                mWords.clear();
-                correct = false;
-                getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
-                MainActivity.sIncorrect++;
-                if (!repeating) {
-                    float coefficientUser = 0.1f;//1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
-                    float coefficientWord = 0.1f;// 1 / (1 + 0.05f * (pocetOdpovediNaTotoSlovoCelkovo));
-                    float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
-                    float chanceWord = 1 / (1 + (float) Math.exp(-(mCurrentWord.getDifficulty() - mSkill)));
-                    float newWordDiff;
-
-
-                    mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (0 - chanceUser));
-                    newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (1 - chanceWord));
-
-                    //update
-                    ContentValues cv = new ContentValues();
-                    cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
-                    cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
-                    cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
-                    mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
-                    //todo save string for upload ↑
-//            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
-
-                    //save to learned
-                    cv = new ContentValues();
-                    cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
-//            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
-                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
-                    cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, mCurrentWord.getTranslations());
-                    mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
-                } else {
-
-
-                    ContentValues cv = new ContentValues();
-//                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
-                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
-                            getTimeSeconds());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
-                    mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+                if (v instanceof Button) {
+                    setView(v);
                 }
-
-//                mHandler.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        next();
-//
-//                    }
-//                }, 1000);
-                new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
-            }
-
-            public boolean onTouch(View v, MotionEvent event) {
+                else {
+                    setView(view);
+                }
                 return gestureDetector.onTouchEvent(event);
             }
         };
-        view.setOnTouchListener(forView);
-        a.setOnTouchListener(forButtons);
-        b.setOnTouchListener(forButtons);
-        c.setOnTouchListener(forButtons);
-        d.setOnTouchListener(forButtons);
+//        OnSwipeTouchListener forView = new OnSwipeTouchListener(getActivity(), true) {
+//            @Override
+//            public boolean onViewDown(View v) {
+//                return false;
+//            }
+//
+//            public void onSwipeLeft() {
+//                highlightCorrect();
+//                makeButtonsUnclickable();
+//                boolean correct;
+//                mWords.clear();
+//                correct = false;
+//                getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//                MainActivity.sIncorrect++;
+//                if (!repeating) {
+//                    float coefficientUser = 0.1f;//1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
+//                    float coefficientWord = 0.1f;// 1 / (1 + 0.05f * (pocetOdpovediNaTotoSlovoCelkovo));
+//                    float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
+//                    float chanceWord = 1 / (1 + (float) Math.exp(-(mCurrentWord.getDifficulty() - mSkill)));
+//                    float newWordDiff;
+//
+//
+//                    mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (0 - chanceUser));
+//                    newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (1 - chanceWord));
+//
+//                    //update
+//                    ContentValues cv = new ContentValues();
+//                    cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
+//                    cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
+//                    cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
+//                    mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+//                    //todo save string for upload ↑
+////            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
+//
+//                    //save to learned
+//                    cv = new ContentValues();
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
+////            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
+//                    mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
+//                } else {
+//
+//
+//                    ContentValues cv = new ContentValues();
+////                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
+//                            getTimeSeconds());
+////                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
+////                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
+//                    mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+//                }
+//
+////                mHandler.postDelayed(new Runnable() {
+////                    @Override
+////                    public void run() {
+////                        next();
+////
+////                    }
+////                }, 1000);
+//                new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
+//            }
+//
+//            public boolean onTouch(View v, MotionEvent event) {
+//                return gestureDetector.onTouchEvent(event);
+//            }
+//        };
+        view.setOnTouchListener(onSwipeTouchListener);
+        a.setOnTouchListener(onSwipeTouchListener);
+        b.setOnTouchListener(onSwipeTouchListener);
+        c.setOnTouchListener(onSwipeTouchListener);
+        d.setOnTouchListener(onSwipeTouchListener);
         next();
     }
 
@@ -375,26 +424,31 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             getNewWord();
         }
 
-        getDistractorsSimilarDifficulty();
-
+//        getDistractorsSimilarDifficulty();
+//        getDistractorsSimilarDifficultySimilarCategory();
+//        getDistractorsSimilarDifficultySameCategoryClosestLevenshtein();
+//        getDistractorsSimilarDifficultyClosestLevenshtein();
+        getDistractorsSimilarDifficultySameCategory();
         mWords.add(mCurrentWord);
         direction = getDirection();
         if (direction == 0) { //direction en-cz
 
             mWord.setText(mCurrentWord.getWord());
             mPron.setText(mCurrentWord.getPronunciation());
+            mPron.setText(mCurrentWord.getCategories()[0]);
 
             Collections.shuffle(mWords);
-            a.setText(mWords.get(0).getTranslations());
-            b.setText(mWords.get(1).getTranslations());
-            c.setText(mWords.get(2).getTranslations());
-            d.setText(mWords.get(3).getTranslations());
+            a.setText(mWords.get(0).getTranslations()[0]);
+            b.setText(mWords.get(1).getTranslations()[0]);
+            c.setText(mWords.get(2).getTranslations()[0]);
+            d.setText(mWords.get(3).getTranslations()[0]);
 
 
         } else { // direction cz-en
 
-            mWord.setText(mCurrentWord.getTranslations());
-            mPron.setText(mCurrentWord.getTranslations());
+            mWord.setText(mCurrentWord.getTranslations()[0]);
+            mPron.setText(mCurrentWord.getTranslations()[0]);
+            mPron.setText(mCurrentWord.getPronunciation());
 
             Collections.shuffle(mWords);
             a.setText(mWords.get(0).getWord());
@@ -555,7 +609,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             float newWordDiff;
 
             if (direction == 0) {
-                if (!((Button) v).getText().equals(mCurrentWord.getTranslations())) {
+                if (!((Button) v).getText().equals(mCurrentWord.getTranslations()[0])) {
                     correct = false;
                     MainActivity.sIncorrect++;
                     getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
@@ -600,7 +654,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
             cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
             cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
-            cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, mCurrentWord.getTranslations());
+            cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
+            cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
             mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
         } else {
             if (direction == 1) {
@@ -615,7 +670,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
                 }
             } else {
-                if (!((Button) v).getText().equals(mCurrentWord.getTranslations())) {
+                if (!((Button) v).getText().equals(mCurrentWord.getTranslations()[0])) {
                     correct = false;
                     MainActivity.sIncorrect++;
                     getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
@@ -641,7 +696,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 @Override
                 public void run() {
                     next();
-
                 }
             }, 1000);
         } else {
@@ -685,10 +739,13 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //            wordToRepeat = new Word();
             mCurrentWord.setWord(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_WORD)));
             //todo uvazovat vsetky preklady
-            mCurrentWord.setTranslations(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS)));
+            mCurrentWord.setTranslations(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
             mCurrentWord.setPronunciation(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION)));
             mCurrentWord.setLastInterval(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL)));
 //            w1.setDifficulty(cur.getFloat(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_DIFFICULTY)));
+            mCurrentWord.setCategories(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+            Log.i("zzzzzz", "check to repeat: " + arrayToString(cur.getString(cur.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")));
+
             cur.close();
             return true;
         } else {
@@ -710,15 +767,14 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         if (currentCursor.moveToPosition(r.nextInt(10))) {
 
 //                    wordToRepeat = new Word();
-            mCurrentWord.setWord(currentCursor.getString(currentCursor.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_WORD)));
+            mCurrentWord.setWord(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_WORD)));
             //todo uvazovat vsetky preklady
-            mCurrentWord.setTranslations(currentCursor.getInt(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)) +
-                    "x " + currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")[0] +
-                    " " + currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
-            mCurrentWord.setPronunciation(currentCursor.getString(currentCursor.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION)));
-            mCurrentWord.setDifficulty(currentCursor.getFloat(currentCursor.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_DIFFICULTY)));
-
+            mCurrentWord.setTranslations(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
+            mCurrentWord.setPronunciation(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PRONUNCIATION)));
+            mCurrentWord.setDifficulty(currentCursor.getFloat(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
+            mCurrentWord.setCategories(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
         }
+        Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")));
         currentCursor.close();
     }
 
@@ -799,92 +855,172 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        mPron.setText(pron);
 //        mAns.add(tran);
 //        translation = tran;
+        fromCursorToWords(cursor);
+        cursor.close();
+        Collections.shuffle(mWords);
+        mWords = mWords.subList(0, 3);
+    }
+
+    public void getDistractorsSimilarDifficultySimilarCategory() {
+        float magic = 0.1f;
+        Cursor cursor;
+        do {
+//            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+//                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
+//                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
+//                    + " AND " + (mSkill + magic)
+//                    + " ORDER BY RANDOM() LIMIT 100", null);
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
+                    + "%'"
+                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+            magic += 0.1;
+            Log.i("dist cur count: ", cursor.getCount() + "");
+        } while (cursor.getCount() < 100);
+
+        fromCursorToWords(cursor);
+        cursor.close();
+        Collections.shuffle(mWords);
+        mWords = mWords.subList(0, 3);
+    }
+
+    public void getDistractorsSimilarDifficultySameCategoryClosestLevenshtein() {
+        float magic = 0.1f;
+        Cursor cursor;
+        do {
+//            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+//                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
+//                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
+//                    + " AND " + (mSkill + magic)
+//                    + " ORDER BY RANDOM() LIMIT 100", null);
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
+                    + "%'"
+                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+            magic += 0.1;
+
+        } while (cursor.getCount() < 10);
+
+        fromCursorToWords(cursor);
+        cursor.close();
+        Collections.shuffle(mWords);
+        Collections.sort(mWords, new WordLevenshteinComparator());
+        mWords = mWords.subList(0, 3);
+        Log.i("levenshtein", mWords.get(0).getLevenshteinToCurrent() + " - " + mWords.get(0).getWord() + "\n" +
+                mWords.get(1).getLevenshteinToCurrent() + " - " + mWords.get(1).getWord() + "\n" +
+                mWords.get(2).getLevenshteinToCurrent() + " - " + mWords.get(2).getWord());
+    }
+
+
+    public void getDistractorsSimilarDifficultyClosestLevenshtein() {
+        float magic = 0.1f;
+        Cursor cursor;
+        do {
+//            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+//                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
+//                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
+//                    + " AND " + (mSkill + magic)
+//                    + " ORDER BY RANDOM() LIMIT 100", null);
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+            magic += 0.1;
+
+        } while (cursor.getCount() < 10);
+
+        fromCursorToWords(cursor);
+        cursor.close();
+//            Collections.shuffle(mWords);
+        Collections.sort(mWords, new WordLevenshteinComparator());
+        mWords = mWords.subList(0, 3);
+        Log.i("levenshtein", mWords.get(0).getLevenshteinToCurrent() + " - " + mWords.get(0).getWord() + "\n" +
+                mWords.get(1).getLevenshteinToCurrent() + " - " + mWords.get(1).getWord() + "\n" +
+                mWords.get(2).getLevenshteinToCurrent() + " - " + mWords.get(2).getWord());
+
+
+    }
+
+    public void getDistractorsSimilarDifficultySameCategory() {
+        Cursor cursor;
+        //presne vsetky kategorie
+//        cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+//                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " = \"" + arrayToString(mCurrentWord.getCategories())
+//                + "\" ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+
+        //obsahuje vsetky kategorie (rovnake poradie)
+        cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + arrayToString(mCurrentWord.getCategories())
+                + "%' ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+        fromCursorToWords(cursor);
+        if (mWords.size() < 6) {
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
+                    + "%' ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+            fromCursorToWords(cursor);
+            if (mWords.size() < 4) {
+                cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                        + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 20", null);
+                fromCursorToWords(cursor);
+            }
+        }
+        cursor.close();
+        Collections.shuffle(mWords);
+        mWords = mWords.subList(0, 3);
+        /*} /*else {
+            Toast.makeText(getActivity(), "Error while loading new word. Please restart app", Toast.LENGTH_LONG).show();
+        }*/
+    }
+
+    public void fromCursorToWords(Cursor cursor) {
         if (cursor.moveToFirst()) {
             do {
                 Word w = new Word();
                 w.setWord(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_WORD)));
+                w.setTranslations(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
+
                 if (mWords.contains(w) || w.equals(mCurrentWord)) continue; //?
                 w.setIsLearned(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED)));//??
                 //todo uvazovat vsetky preklady
-                w.setTranslations(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)) +
-                        "x " + cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")[0] +
-                        " " + cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
                 w.setPronunciation(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PRONUNCIATION)));
                 w.setDifficulty(cursor.getFloat(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
                 w.setFrequency(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_FREQUENCY)));
                 w.setLearnedCount(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
                 w.setPercentil(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PERCENTIL)));
-
+                w.setCategories(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
                 mWords.add(w);
             } while (cursor.moveToNext());
-            cursor.close();
-            Collections.shuffle(mWords);
-            mWords = mWords.subList(0, 3);
-        } else {
-            Toast.makeText(getActivity(), "Error while loading new word. Please restart app", Toast.LENGTH_LONG).show();
         }
     }
 
+
     public void highlightCorrect() {
+        String answer = null;
         if (direction == 0) {
-            if (a.getText().toString().equals(mCurrentWord.getTranslations())) {
-                a.setTextColor(Color.GREEN);
-                b.setTextColor(Color.RED);
-                c.setTextColor(Color.RED);
-                d.setTextColor(Color.RED);
-                return;
-            }
-            if (b.getText().toString().equals(mCurrentWord.getTranslations())) {
-                b.setTextColor(Color.GREEN);
-                a.setTextColor(Color.RED);
-                c.setTextColor(Color.RED);
-                d.setTextColor(Color.RED);
-                return;
-            }
-            if (c.getText().toString().equals(mCurrentWord.getTranslations())) {
-                c.setTextColor(Color.GREEN);
-                b.setTextColor(Color.RED);
-                a.setTextColor(Color.RED);
-                d.setTextColor(Color.RED);
-                return;
-            }
-            if (d.getText().toString().equals(mCurrentWord.getTranslations())) {
-                d.setTextColor(Color.GREEN);
-                b.setTextColor(Color.RED);
-                c.setTextColor(Color.RED);
-                a.setTextColor(Color.RED);
-                return;
-            }
+            answer = mCurrentWord.getTranslations()[0];
         } else {
-            if (a.getText().toString().equals(mCurrentWord.getWord())) {
-                a.setTextColor(Color.GREEN);
-                b.setTextColor(Color.RED);
-                c.setTextColor(Color.RED);
-                d.setTextColor(Color.RED);
-                return;
-            }
-            if (b.getText().toString().equals(mCurrentWord.getWord())) {
-                b.setTextColor(Color.GREEN);
-                a.setTextColor(Color.RED);
-                c.setTextColor(Color.RED);
-                d.setTextColor(Color.RED);
-                return;
-            }
-            if (c.getText().toString().equals(mCurrentWord.getWord())) {
-                c.setTextColor(Color.GREEN);
-                b.setTextColor(Color.RED);
-                a.setTextColor(Color.RED);
-                d.setTextColor(Color.RED);
-                return;
-            }
-            if (d.getText().toString().equals(mCurrentWord.getWord())) {
-                d.setTextColor(Color.GREEN);
-                b.setTextColor(Color.RED);
-                c.setTextColor(Color.RED);
-                a.setTextColor(Color.RED);
-                return;
-            }
+            answer = mCurrentWord.getWord();
         }
+        if (a.getText().toString().equals(answer)) {
+            a.setTextColor(getResources().getColor(R.color.greenCorrect));
+            b.setTextColor(getResources().getColor(R.color.redIncorrect));
+            c.setTextColor(getResources().getColor(R.color.redIncorrect));
+            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+        } else if (b.getText().toString().equals(answer)) {
+            b.setTextColor(getResources().getColor(R.color.greenCorrect));
+            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+            c.setTextColor(getResources().getColor(R.color.redIncorrect));
+            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+        } else if (c.getText().toString().equals(answer)) {
+            c.setTextColor(getResources().getColor(R.color.greenCorrect));
+            b.setTextColor(getResources().getColor(R.color.redIncorrect));
+            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+        } else if (d.getText().toString().equals(answer)) {
+            d.setTextColor(getResources().getColor(R.color.greenCorrect));
+            b.setTextColor(getResources().getColor(R.color.redIncorrect));
+            c.setTextColor(getResources().getColor(R.color.redIncorrect));
+            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+        }
+
     }
 
     public static class IncorrectDialogFragment extends DialogFragment {
@@ -894,26 +1030,193 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         @Override
         public void onDismiss(DialogInterface dialog) {
             mFragment.next();
+            mFragment = null;
             super.onDismiss(dialog);
         }
 
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
-            mFragment = (LearningFragment) getFragmentManager().findFragmentById(R.id.apps_fragment);
-
+            mFragment = (LearningFragment) getFragmentManager().findFragmentById(R.id.learning_fragment);
             // Use the Builder class for convenient dialog construction
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             LayoutInflater inflater = getActivity().getLayoutInflater();
 
             // Inflate and set the layout for the dialog
             // Pass null as the parent view because its going in the dialog layout
-            builder.setView(inflater.inflate(R.layout.dialog_incorrect, null));
-            Dialog d = builder.create();
+            View view = inflater.inflate(R.layout.dialog_incorrect, null);
+
+            builder.setView(view);
+
+
+            final Dialog d = builder.create();
+            TextView tap = (TextView) view.findViewById(R.id.tap_to_continue);
+
+            tap.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    d.dismiss();
+                }
+            });
             d.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             d.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
             return d;
         }
     }
 
+    public static class TranslationsDialogFragment extends DialogFragment {
 
+        private ArrayList<String> translations;
+        private int buttonPosition;
+
+        public static TranslationsDialogFragment newInstance(String[] t, int position) {
+            TranslationsDialogFragment fragment = new TranslationsDialogFragment();
+            Bundle args = new Bundle();
+            args.putStringArray("translations", t);
+            args.putInt("position", position);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            if (getArguments() != null) {
+                String[] t = getArguments().getStringArray("translations");
+                buttonPosition = getArguments().getInt("position");
+                translations = new ArrayList<>();
+                Collections.addAll(translations, t);
+            }
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+            // Inflate and set the layout for the dialog
+            // Pass null as the parent view because its going in the dialog layout
+            View view = getActivity().getLayoutInflater().inflate(R.layout.dialog_translations, null);
+
+            builder.setView(view);
+
+
+            final Dialog d = builder.create();
+            ListView list = (ListView) view.findViewById(R.id.translations);
+            list.setAdapter(new TranslationsAdapter(getActivity(), translations));
+            list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    if (parent.getCount() == 1 || position == 0) {
+                        dismiss();
+                        return;
+                    }
+                    LearningFragment fragment = (LearningFragment) getFragmentManager().
+                            findFragmentById(R.id.learning_fragment);
+                    String word = null;
+                    String[] trans = null;
+                    if (buttonPosition < 4) {
+                        ((Button) longClicked).setText(translations.get(position));
+                        swap(fragment.getWords().get(buttonPosition).getTranslations(), 0, position);
+                        trans = fragment.getWords().get(buttonPosition).getTranslations();
+                        word = fragment.getWords().get(buttonPosition).getWord();
+                    } else {
+                        fragment.getWord().setText(translations.get(position));
+                        swap(fragment.getCurrentWord().getTranslations(), 0, position);
+                        trans = fragment.getCurrentWord().getTranslations();
+                        word = fragment.getCurrentWord().getWord();
+//                        longClicked.postInvalidate();
+                    }
+                    SQLiteDatabase db = new WordDbHelper(getActivity()).getWritableDatabase();
+                    ContentValues cv = new ContentValues();
+                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(
+                            trans));
+                    db.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD
+                            + " = ?", new String[]{word});
+                    cv.clear();
+                    cv.put(WordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(
+                            trans));
+                    db.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD
+                            + " = ?", new String[]{word});
+
+                    db.close();
+                    dismiss();
+                }
+            });
+            return d;
+        }
+
+    }
+
+    //https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java //Not recursive and faster
+    public int levenshteinDistance(CharSequence lhs, CharSequence rhs) {
+        int len0 = lhs.length() + 1;
+        int len1 = rhs.length() + 1;
+
+        // the array of distances
+        int[] cost = new int[len0];
+        int[] newcost = new int[len0];
+
+        // initial cost of skipping prefix in String s0
+        for (int i = 0; i < len0; i++) cost[i] = i;
+
+        // dynamically computing the array of distances
+
+        // transformation cost for each letter in s1
+        for (int j = 1; j < len1; j++) {
+            // initial cost of skipping prefix in String s1
+            newcost[0] = j;
+
+            // transformation cost for each letter in s0
+            for (int i = 1; i < len0; i++) {
+                // matching current letters in both strings
+                int match = (lhs.charAt(i - 1) == rhs.charAt(j - 1)) ? 0 : 1;
+
+                // computing cost for each transformation
+                int cost_replace = cost[i - 1] + match;
+                int cost_insert = cost[i] + 1;
+                int cost_delete = newcost[i - 1] + 1;
+
+                // keep minimum cost
+                newcost[i] = Math.min(Math.min(cost_insert, cost_delete), cost_replace);
+            }
+
+            // swap cost/newcost arrays
+            int[] swap = cost;
+            cost = newcost;
+            newcost = swap;
+        }
+
+        // the distance is the cost for transforming all letters in both strings
+        return cost[len0 - 1];
+    }
+
+    //todo http://gradleplease.appspot.com/#levenshtein
+
+    public static final String arrayToString(String[] array) {
+        StringBuilder builder = new StringBuilder();
+        String delim = "";
+        for (String s : array) {
+            builder.append(delim).append(s);
+            delim = ";";
+        }
+        return builder.toString();
+    }
+
+    public static final <T> void swap(T[] arr, int i, int j) {
+        T t = arr[i];
+        arr[i] = arr[j];
+        arr[j] = t;
+    }
+
+    public List<Word> getWords() {
+        return mWords;
+    }
+
+    public Word getCurrentWord() {
+        return mCurrentWord;
+    }
+
+    public TextView getWord() {
+        return mWord;
+    }
 }
