@@ -1,7 +1,5 @@
 package cz.muni.fi.anglictina.db.model;
 
-import java.util.Arrays;
-
 /**
  * Created by collfi on 17. 11. 2015.
  */
@@ -114,22 +112,13 @@ public class Word {
 
         Word word1 = (Word) o;
 
-        if (word != null ? !word.equals(word1.word) : word1.word != null) return false;
-//        if (translations == null && word1.translations == null) return true;
-//        if (translations == null) return false;
-//        if (word1.translations == null) return false;
-//        if (translations.length == 0 && word1.translations.length == 0) return true;
-//        if (translations.length == 0) return false;
-//        if (word1.translations.length == 0) return false;
-        return (translations[0] != null ? !translations[0].equals(word1.translations[0]) : word1.translations[0] != null);
+        return !(word != null ? !word.equals(word1.word) : word1.word != null);
 
     }
 
     @Override
     public int hashCode() {
-        int result = word != null ? word.hashCode() : 0;
-        result = 31 * result + (translations != null ? Arrays.deepHashCode(translations) : 0);
-        return result;
+        return word != null ? word.hashCode() : 0;
     }
 
     @Override

@@ -28,6 +28,10 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,9 +52,8 @@ import cz.muni.fi.anglictina.utils.adapters.TranslationsAdapter;
 /**
  * Created by collfi on 27. 10. 2015.
  */
-//todo nasobny bolo 2x v moznostiach???
 public class LearningFragment extends Fragment implements TextToSpeech.OnInitListener {
-    public static final long DAY = 10;//60 * 60 * 24;
+    public static final long DAY = 100000000;//60 * 60 * 24;
     private float mSkill;
     private Button a;
     private Button b;
@@ -250,62 +253,68 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 mWords.clear();
                 correct = false;
                 MainActivity.sIncorrect++;
-                getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//                getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+
 
                 if (!repeating) {
-                    float coefficientUser = 0.1f;//1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
-                    float coefficientWord = 0.1f;// 1 / (1 + 0.05f * (pocetOdpovediNaTotoSlovoCelkovo));
-                    float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
-                    float chanceWord = 1 / (1 + (float) Math.exp(-(mCurrentWord.getDifficulty() - mSkill)));
                     float newWordDiff;
 
+                    float coefficientUser = /*0.1f;*/1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
+                    float coefficientWord = /*0.1f;*/ 1 / (1 + 0.05f * (mCurrentWord.getLearnedCount()));
+                    float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
+                    float chanceWord = 1 / (1 + (float) Math.exp(-(mCurrentWord.getDifficulty() - mSkill)));
 
                     mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (0 - chanceUser));
                     newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (1 - chanceWord));
-
-                    //update
-                    ContentValues cv = new ContentValues();
-                    cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
-                    cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
-                    cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
-                    mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
-                    //todo save string for upload ↑
-//            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
-
-                    //save to learned
-                    cv = new ContentValues();
-                    cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
-//            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
-                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
-                    cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
-                    cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
-                    mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
+                    updateDbNewWord(newWordDiff);
+//                    //update
+//                    ContentValues cv = new ContentValues();
+//                    cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
+//                    cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
+//                    cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
+//                    mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+//                    //todo save string for upload ↑
+////            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
+//
+//                    //save to learned
+//                    cv = new ContentValues();
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
+////            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
+//                    mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
                 } else {
+                    updateDbRepeating(correct);
 
-
-                    ContentValues cv = new ContentValues();
-//                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
-                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
-                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
-                            getTimeSeconds());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
-                    mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+//                    highlightCorrect();
+//                    makeButtonsUnclickable();
+//                    boolean correct;
+//                    mWords.clear();
+//                    correct = false;
+//                    MainActivity.sIncorrect++;
+//                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//
+//                    updateDbRepeating(correct);
+//                    ContentValues cv = new ContentValues();
+////                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
+//                    cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
+//                            getTimeSeconds());
+////                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
+////                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
+//                    mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
                 }
 
                 new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
             }
-//            public void onSwipeBottom() {
-//                Toast.makeText(getActivity(), "bottom", Toast.LENGTH_SHORT).show();
-//            }
 
             public boolean onTouch(View v, MotionEvent event) {
                 if (v instanceof Button) {
                     setView(v);
-                }
-                else {
+                } else {
                     setView(view);
                 }
                 return gestureDetector.onTouchEvent(event);
@@ -401,7 +410,11 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b.setTextColor(Color.BLACK);
         c.setTextColor(Color.BLACK);
         d.setTextColor(Color.BLACK);
-        getView().setBackgroundColor(Color.WHITE);
+//        getView().setBackgroundColor(Color.WHITE);
+        a.setBackground(getResources().getDrawable(R.drawable.button));
+        b.setBackground(getResources().getDrawable(R.drawable.button));
+        c.setBackground(getResources().getDrawable(R.drawable.button));
+        d.setBackground(getResources().getDrawable(R.drawable.button));
         a.setClickable(true);
         b.setClickable(true);
         c.setClickable(true);
@@ -427,15 +440,14 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        getDistractorsSimilarDifficulty();
 //        getDistractorsSimilarDifficultySimilarCategory();
 //        getDistractorsSimilarDifficultySameCategoryClosestLevenshtein();
-//        getDistractorsSimilarDifficultyClosestLevenshtein();
-        getDistractorsSimilarDifficultySameCategory();
+        getDistractorsSimilarDifficultyClosestLevenshtein();
+//        getDistractorsSimilarDifficultySameCategory();
         mWords.add(mCurrentWord);
         direction = getDirection();
         if (direction == 0) { //direction en-cz
 
             mWord.setText(mCurrentWord.getWord());
             mPron.setText(mCurrentWord.getPronunciation());
-            mPron.setText(mCurrentWord.getCategories()[0]);
 
             Collections.shuffle(mWords);
             a.setText(mWords.get(0).getTranslations()[0]);
@@ -448,7 +460,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
             mWord.setText(mCurrentWord.getTranslations()[0]);
             mPron.setText(mCurrentWord.getTranslations()[0]);
-            mPron.setText(mCurrentWord.getPronunciation());
+            mPron.setText(mCurrentWord.getPronunciation()); //delete^
 
             Collections.shuffle(mWords);
             a.setText(mWords.get(0).getWord());
@@ -602,8 +614,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         mWords.clear();
 
         if (!repeating) {
-            float coefficientUser = 0.1f;//1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
-            float coefficientWord = 0.1f;// 1 / (1 + 0.05f * (pocetOdpovediNaTotoSlovoCelkovo));
+            float coefficientUser = /*0.1f;*/1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
+            float coefficientWord = /*0.1f;*/ 1 / (1 + 0.05f * (mCurrentWord.getLearnedCount()));
             float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
             float chanceWord = 1 / (1 + (float) Math.exp(-(mCurrentWord.getDifficulty() - mSkill)));
             float newWordDiff;
@@ -612,20 +624,20 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 if (!((Button) v).getText().equals(mCurrentWord.getTranslations()[0])) {
                     correct = false;
                     MainActivity.sIncorrect++;
-                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
                     mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (0 - chanceUser));
                     newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (1 - chanceWord));
                 } else {
                     MainActivity.sCorrect++;
                     correct = true;
-                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
                     mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (1 - chanceUser));
                     newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (0 - chanceWord));
                 }
             } else {
                 if (!((Button) v).getText().equals(mCurrentWord.getWord())) {
                     correct = false;
-                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
                     MainActivity.sIncorrect++;
 
                     mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (0 - chanceUser));
@@ -633,61 +645,64 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 } else {
                     MainActivity.sCorrect++;
                     correct = true;
-                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
                     mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (1 - chanceUser));
                     newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (0 - chanceWord));
                 }
             }
+            updateDbNewWord(newWordDiff);
             //update
-            ContentValues cv = new ContentValues();
-            cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
-            cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
-            cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
-            mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
-            //todo save string for upload ↑
-//            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
-
-            //save to learned
-            cv = new ContentValues();
-            cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
-//            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
-            cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
-            cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
-            cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
-            cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
-            cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
-            mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
+//            ContentValues cv = new ContentValues();
+//            cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
+//            cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
+//            cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
+//            mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+//            //todo save string for upload ↑
+////            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
+//
+//            //save to learned
+//            cv = new ContentValues();
+//            cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
+////            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
+//            cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
+//            cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
+//            cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
+//            cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
+//            cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
+//            mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
         } else {
             if (direction == 1) {
                 if (!((Button) v).getText().equals(mCurrentWord.getWord())) {
                     correct = false;
                     MainActivity.sIncorrect++;
-                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
                 } else {
                     MainActivity.sCorrect++;
                     correct = true;
-                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
 
                 }
             } else {
                 if (!((Button) v).getText().equals(mCurrentWord.getTranslations()[0])) {
                     correct = false;
                     MainActivity.sIncorrect++;
-                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
                 } else {
                     MainActivity.sCorrect++;
                     correct = true;
-                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
+//                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
                 }
             }
-            ContentValues cv = new ContentValues();
-//                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
-            cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
-            cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
-                    getTimeSeconds());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
-            mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+
+            updateDbRepeating(correct);
+//            ContentValues cv = new ContentValues();
+////                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
+//            cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
+//            cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
+//                    getTimeSeconds());
+////                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
+////                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
+//            mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
 
 
         }
@@ -701,9 +716,60 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         } else {
             new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
         }
+    }
 
+    public void updateDbNewWord(float newWordDiff) {
+        //update
+        ContentValues cv = new ContentValues();
+        if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) { //check
+            cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
+            cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
+            cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
+            mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
+            //todo save string for upload ↑
+            try {
+                SharedPreferences sp = getActivity().getSharedPreferences("post", Context.MODE_PRIVATE);
+                JSONArray ja = new JSONArray(sp.getString("post", "[]"));
+                JSONObject upload = new JSONObject();
+                upload.put("english", mCurrentWord.getWord());
+                upload.put("difficulty", newWordDiff - mCurrentWord.getDifficulty());
+                ja.put(upload);
+                Log.i("learning", ja.toString());
+                SharedPreferences.Editor ed = sp.edit();
+                ed.putString("post", ja.toString());
+                ed.apply();
+            } catch (JSONException e) {
+                Log.e("learning", "json exception saving string to post. " + e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+        }
+
+//            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
+
+        //save to learned
+        cv = new ContentValues();
+        cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
+//            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
+        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
+        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
+        cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
+        cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
+        cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
+        mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
+    }
+
+    public void updateDbRepeating(boolean correct) {
+        ContentValues cv = new ContentValues();
+//                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
+        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
+        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
+                getTimeSeconds());
+//                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
+//                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
+        mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
 
     }
+
 
     /**
      * Computes when current word should be reviewed.
@@ -715,7 +781,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
      * For debug purposes returns current time + 10 seconds
      */
     public long computeRepeatTime(boolean correct, int count, int mozno) {
-        return getTimeSeconds() + 10;
+        return getTimeSeconds() + 100000000;
 //        if (!correct) return getTimeSeconds() + DAY;
 //        if (mCurrentWordLastInterval <= DAY) { //*1.1
 //            return DAY * 6;
@@ -738,7 +804,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             repeating = true;
 //            wordToRepeat = new Word();
             mCurrentWord.setWord(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_WORD)));
-            //todo uvazovat vsetky preklady
             mCurrentWord.setTranslations(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
             mCurrentWord.setPronunciation(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION)));
             mCurrentWord.setLastInterval(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL)));
@@ -773,6 +838,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setPronunciation(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PRONUNCIATION)));
             mCurrentWord.setDifficulty(currentCursor.getFloat(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
             mCurrentWord.setCategories(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+            mCurrentWord.setLearnedCount(currentCursor.getInt(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
         }
         Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")));
         currentCursor.close();
@@ -819,10 +885,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b.setLongClickable(false);
         c.setLongClickable(false);
         d.setLongClickable(false);
-//        a.setOnClickListener(null);
-//        b.setOnClickListener(null);
-//        c.setOnClickListener(null);
-//        d.setOnClickListener(null);
     }
 
     /**
@@ -864,19 +926,19 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     public void getDistractorsSimilarDifficultySimilarCategory() {
         float magic = 0.1f;
         Cursor cursor;
-        do {
+
 //            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
 //                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
 //                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
 //                    + " AND " + (mSkill + magic)
 //                    + " ORDER BY RANDOM() LIMIT 100", null);
-            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
-                    + "%'"
-                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
-            magic += 0.1;
-            Log.i("dist cur count: ", cursor.getCount() + "");
-        } while (cursor.getCount() < 100);
+        cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
+                + "%'"
+                + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 100", null);
+        magic += 0.1;
+        Log.i("dist cur count: ", cursor.getCount() + "");
+
 
         fromCursorToWords(cursor);
         cursor.close();
@@ -971,24 +1033,37 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     }
 
     public void fromCursorToWords(Cursor cursor) {
+
         if (cursor.moveToFirst()) {
             do {
                 Word w = new Word();
                 w.setWord(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_WORD)));
                 w.setTranslations(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
-
                 if (mWords.contains(w) || w.equals(mCurrentWord)) continue; //?
+                boolean contains = false;
+                for (int i = 0; i < mCurrentWord.getTranslations().length; i++) {
+                    for (int j = 0; j < w.getTranslations().length; j++) {
+                        if (mCurrentWord.getTranslations()[i].equals(
+                                w.getTranslations()[j])) {
+                            contains = true;
+                            break;
+                        }
+                    }
+                    if (contains) break;
+                }
+                if (contains) continue;
                 w.setIsLearned(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED)));//??
-                //todo uvazovat vsetky preklady
                 w.setPronunciation(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PRONUNCIATION)));
                 w.setDifficulty(cursor.getFloat(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
                 w.setFrequency(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_FREQUENCY)));
                 w.setLearnedCount(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
                 w.setPercentil(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PERCENTIL)));
                 w.setCategories(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+                w.setLevenshteinToCurrent(levenshteinDistance(mCurrentWord.getWord(), w.getWord()));
                 mWords.add(w);
             } while (cursor.moveToNext());
         }
+
     }
 
 
@@ -1000,25 +1075,41 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             answer = mCurrentWord.getWord();
         }
         if (a.getText().toString().equals(answer)) {
-            a.setTextColor(getResources().getColor(R.color.greenCorrect));
-            b.setTextColor(getResources().getColor(R.color.redIncorrect));
-            c.setTextColor(getResources().getColor(R.color.redIncorrect));
-            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+            a.setBackground(getResources().getDrawable(R.drawable.button_correct));
+            b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+//            a.setTextColor(getResources().getColor(R.color.greenCorrect));
+//            b.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            c.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            d.setTextColor(getResources().getColor(R.color.redIncorrect));
         } else if (b.getText().toString().equals(answer)) {
-            b.setTextColor(getResources().getColor(R.color.greenCorrect));
-            a.setTextColor(getResources().getColor(R.color.redIncorrect));
-            c.setTextColor(getResources().getColor(R.color.redIncorrect));
-            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+            b.setBackground(getResources().getDrawable(R.drawable.button_correct));
+            a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+//            b.setTextColor(getResources().getColor(R.color.greenCorrect));
+//            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            c.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            d.setTextColor(getResources().getColor(R.color.redIncorrect));
         } else if (c.getText().toString().equals(answer)) {
-            c.setTextColor(getResources().getColor(R.color.greenCorrect));
-            b.setTextColor(getResources().getColor(R.color.redIncorrect));
-            a.setTextColor(getResources().getColor(R.color.redIncorrect));
-            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+            c.setBackground(getResources().getDrawable(R.drawable.button_correct));
+            b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+//            c.setTextColor(getResources().getColor(R.color.greenCorrect));
+//            b.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            d.setTextColor(getResources().getColor(R.color.redIncorrect));
         } else if (d.getText().toString().equals(answer)) {
-            d.setTextColor(getResources().getColor(R.color.greenCorrect));
-            b.setTextColor(getResources().getColor(R.color.redIncorrect));
-            c.setTextColor(getResources().getColor(R.color.redIncorrect));
-            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+            d.setBackground(getResources().getDrawable(R.drawable.button_correct));
+            b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+            a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
+//            a.setTextColor(getResources().getColor(R.color.greenCorrect));
+//            b.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            c.setTextColor(getResources().getColor(R.color.redIncorrect));
+//            a.setTextColor(getResources().getColor(R.color.redIncorrect));
         }
 
     }

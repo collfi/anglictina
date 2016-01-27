@@ -26,8 +26,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
@@ -108,7 +112,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
@@ -162,6 +165,107 @@ public class MainActivity extends AppCompatActivity
         SQLiteDatabase db = helper.getWritableDatabase();
         db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
         db.close();
+//        new TestTask2().execute();
+
+    }
+
+    public class TestTask extends AsyncTask<Void, Void, Void> {
+
+
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+
+                URL url = new URL("http://collfi.pythonanywhere.com/api/");
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
+                dStream.flush();
+                dStream.close();
+                int responseCode = connection.getResponseCode();
+                Log.d("POST", "MSG " + connection.getResponseMessage());
+                Log.d("POST RES", "" + responseCode);
+                if (responseCode != 200) {
+                    return null;
+                }
+                final StringBuilder output = new StringBuilder("Request URL " + url);
+                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = "";
+                StringBuilder responseOutput = new StringBuilder();
+                while ((line = br.readLine()) != null) {
+                    responseOutput.append(line);
+                }
+                br.close();
+
+                Log.d("output", responseOutput.toString());
+
+                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
+
+
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+    }
+
+    public class TestTask2 extends AsyncTask<Void, Void, Void> {
+
+
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+
+
+                URL url = new URL("http://collfi.pythonanywhere.com/");
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+//                String urlParameters = "email=" + params[0];
+//                Log.d("GET", connection.getURL() + " " + urlParameters);
+                connection.setRequestProperty("Content-Type", "text/html");
+                connection.setRequestMethod("GET");
+
+                int responseCode = connection.getResponseCode();
+                Log.d("GET", "MSG " + connection.getResponseMessage());
+                Log.d("GET RES", "" + responseCode);
+                if (responseCode != 200) {
+                    return null;
+                }
+                final StringBuilder output = new StringBuilder("Request URL " + url);
+                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = "";
+                StringBuilder responseOutput = new StringBuilder();
+                while ((line = br.readLine()) != null) {
+                    responseOutput.append(line);
+                }
+                br.close();
+
+                Log.d("output", responseOutput.toString());
+
+                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
+
+
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
     }
 
     public class Levenshtein extends AsyncTask<Void, Pair<Integer, String>, Void> {

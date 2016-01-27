@@ -21,6 +21,10 @@
             android:singleLine="false"
             android:summary="Automaticka synchronizace pri ukonceni aplikace"
             android:title="Auto. synchronizace"/>
+        <Preference
+            android:icon="@drawable/ic_sync_black_24dp"
+            android:key="pref_sync_now"
+            android:title="Synchronizuj ted"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="pref_general"
