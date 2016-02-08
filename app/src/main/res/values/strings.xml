@@ -66,4 +66,5 @@
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="tip_warning">Netipujte! Systém se pak dokáže lépe přispůsobovat.\nPokud nezdnáte odpověď, potáhněte prstem z prava do leva anebo z leva do prava.</string>
     <string name="word_translations">Překlady slova</string>
+    <string name="title_activity_revising">Revising</string>
 </resources>

@@ -1,12 +1,14 @@
 package cz.muni.fi.anglictina.activities;
 
+import android.app.AlarmManager;
 import android.app.Dialog;
-import android.content.ContentValues;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -22,22 +24,20 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
-import cz.muni.fi.anglictina.db.WordContract.WordEntry;
 import cz.muni.fi.anglictina.db.WordDbHelper;
 import cz.muni.fi.anglictina.db.model.Word;
+import cz.muni.fi.anglictina.fragments.SettingsFragment;
+import cz.muni.fi.anglictina.utils.network.AlarmReceiver;
 
 
 public class MainActivity extends AppCompatActivity
@@ -69,22 +69,45 @@ public class MainActivity extends AppCompatActivity
                 WordDbHelper helper = new WordDbHelper(this);
                 SQLiteDatabase db = helper.getWritableDatabase();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words3.txt")));
+
+
+                String sql = "INSERT INTO " + WordContract.WordEntry.TABLE_NAME + " VALUES (?,?,?,?,?,?,?,?,?, ?);";
+                SQLiteStatement statement = db.compileStatement(sql);
+                db.beginTransaction();
+                //todo bulk insert
                 String line = reader.readLine();
                 while (line != null) {
-                    ContentValues values = new ContentValues();
+//                    ContentValues values = new ContentValues();
                     String[] s = line.split("\t");
-                    values.put(WordEntry.COLUMN_NAME_WORD, s[0]);
-                    values.put(WordEntry.COLUMN_NAME_TRANSLATIONS, s[1]);
-                    values.put(WordEntry.COLUMN_NAME_FREQUENCY, s[2]);
-                    values.put(WordEntry.COLUMN_NAME_PERCENTIL, s[3]);
-                    values.put(WordEntry.COLUMN_NAME_PRONUNCIATION, s[4]);
-                    values.put(WordEntry.COLUMN_NAME_DIFFICULTY, ((Float.valueOf(s[3]) * 4f / 100f) - 2f));
-                    values.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, 0);
-                    values.put(WordEntry.COLUMN_NAME_LEARNED, 0);
-                    values.put(WordEntry.COLUMN_NAME_CATEGORIES, s[5]);
-                    db.insert(WordEntry.TABLE_NAME, null, values);
+//                    values.put(WordEntry.COLUMN_NAME_WORD, s[0]);
+//                    values.put(WordEntry.COLUMN_NAME_TRANSLATIONS, s[1]);
+//                    values.put(WordEntry.COLUMN_NAME_FREQUENCY, s[2]);
+//                    values.put(WordEntry.COLUMN_NAME_PERCENTIL, s[3]);
+//                    values.put(WordEntry.COLUMN_NAME_PRONUNCIATION, s[4]);
+//                    values.put(WordEntry.COLUMN_NAME_DIFFICULTY, ((Float.valueOf(s[3]) * 4f / 100f) - 2f));
+//                    values.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, 0);
+//                    values.put(WordEntry.COLUMN_NAME_LEARNED, 0);
+//                    values.put(WordEntry.COLUMN_NAME_CATEGORIES, s[5]);
+//                    db.insert(WordEntry.TABLE_NAME, null, values);
+
+
+                    statement.clearBindings();
+                    statement.bindLong(1, System.nanoTime());
+                    statement.bindString(2, s[0]);
+                    statement.bindString(3, s[1]);
+                    statement.bindLong(4, Integer.valueOf(s[2]));
+                    statement.bindLong(5, Integer.valueOf(s[3]));
+                    statement.bindDouble(6, ((Float.valueOf(s[3]) * 4f / 100f) - 2f));
+                    statement.bindLong(7, 0);
+                    statement.bindLong(8, 0);
+                    statement.bindString(9, s[5]);
+                    statement.bindString(10, s[4]);
+                    statement.execute();
+
                     line = reader.readLine();
                 }
+                db.setTransactionSuccessful();
+                db.endTransaction();
                 db.close();
                 reader.close();
             } catch (IOException ioe) {
@@ -98,7 +121,8 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences sp = getSharedPreferences("stats", Context.MODE_PRIVATE);
         sCorrect = sp.getInt("correct", 0);
         sIncorrect = sp.getInt("incorrect", 0);
-//        new Levenshtein().execute();
+
+//        firstTime();
     }
 
     @Override
@@ -123,8 +147,14 @@ public class MainActivity extends AppCompatActivity
             startActivity(new Intent(this, SettingsActivity.class));
         } else if (id == R.id.nav_statistics) {
             DialogFragment dialog = new StatisticsFragment();
-
             dialog.show(getSupportFragmentManager(), "StatisticsDialogFragment");
+        } else if (id == R.id.nav_revise) {
+            startActivity(new Intent(this, LearnedWordsActivity.class));
+        } else if (id == R.id.nav_feedback) {
+            SettingsFragment.FeedbackDialog dialog = new SettingsFragment.FeedbackDialog();
+            dialog.show(getSupportFragmentManager(), "feedback");
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.learning_layout);
@@ -160,111 +190,23 @@ public class MainActivity extends AppCompatActivity
         Log.i("qqq", "main activity on Resume");
     }
 
+    public void firstTime() {
+        SharedPreferences sp = getSharedPreferences("firstTime", Context.MODE_PRIVATE);
+        if (sp.getBoolean("run", true)) {
+            sp.edit().putBoolean("run", false).apply();
+            Intent intent = new Intent(this, AlarmReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
+            AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            manager.setRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
+        }
+    }
+
     public void deleteDb(View v) {
         WordDbHelper helper = new WordDbHelper(this);
         SQLiteDatabase db = helper.getWritableDatabase();
         db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
         db.close();
 //        new TestTask2().execute();
-
-    }
-
-    public class TestTask extends AsyncTask<Void, Void, Void> {
-
-
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-
-
-                URL url = new URL("http://collfi.pythonanywhere.com/api/");
-
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
-                connection.setDoOutput(true);
-                DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
-                dStream.flush();
-                dStream.close();
-                int responseCode = connection.getResponseCode();
-                Log.d("POST", "MSG " + connection.getResponseMessage());
-                Log.d("POST RES", "" + responseCode);
-                if (responseCode != 200) {
-                    return null;
-                }
-                final StringBuilder output = new StringBuilder("Request URL " + url);
-                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
-                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line = "";
-                StringBuilder responseOutput = new StringBuilder();
-                while ((line = br.readLine()) != null) {
-                    responseOutput.append(line);
-                }
-                br.close();
-
-                Log.d("output", responseOutput.toString());
-
-                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
-
-
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-    }
-
-    public class TestTask2 extends AsyncTask<Void, Void, Void> {
-
-
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-
-
-                URL url = new URL("http://collfi.pythonanywhere.com/");
-
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-//                String urlParameters = "email=" + params[0];
-//                Log.d("GET", connection.getURL() + " " + urlParameters);
-                connection.setRequestProperty("Content-Type", "text/html");
-                connection.setRequestMethod("GET");
-
-                int responseCode = connection.getResponseCode();
-                Log.d("GET", "MSG " + connection.getResponseMessage());
-                Log.d("GET RES", "" + responseCode);
-                if (responseCode != 200) {
-                    return null;
-                }
-                final StringBuilder output = new StringBuilder("Request URL " + url);
-                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
-                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line = "";
-                StringBuilder responseOutput = new StringBuilder();
-                while ((line = br.readLine()) != null) {
-                    responseOutput.append(line);
-                }
-                br.close();
-
-                Log.d("output", responseOutput.toString());
-
-                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
-
-
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
 
     }
 

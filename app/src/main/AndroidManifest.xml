@@ -3,6 +3,7 @@
     package="cz.muni.fi.anglictina" >
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:allowBackup="true"
@@ -36,6 +37,21 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity" />
         </activity>
+        <activity
+            android:name=".activities.LearnedWordsActivity"
+            android:label="@string/title_activity_revising"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/MyActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".activities.MainActivity" />
+        </activity>
+        <receiver android:name=".utils.network.BootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".utils.network.AlarmReceiver"/>
     </application>
 
 </manifest>

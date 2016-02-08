@@ -1,9 +1,12 @@
 package cz.muni.fi.anglictina.db.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by collfi on 17. 11. 2015.
  */
-public class Word {
+public class Word implements Parcelable {
     private String word;
     private String pronunciation;
     private String[] translations;
@@ -128,4 +131,52 @@ public class Word {
                 ", 1. translation=" + translations[0] +
                 '}';
     }
+
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.word);
+        dest.writeString(this.pronunciation);
+        dest.writeStringArray(this.translations);
+        dest.writeInt(this.frequency);
+        dest.writeInt(this.percentil);
+        dest.writeFloat(this.difficulty);
+        dest.writeInt(this.learnedCount);
+        dest.writeInt(this.isLearned);
+        dest.writeInt(this.lastInterval);
+        dest.writeStringArray(this.categories);
+        dest.writeInt(this.levenshteinToCurrent);
+    }
+
+    public Word() {
+    }
+
+    protected Word(Parcel in) {
+        this.word = in.readString();
+        this.pronunciation = in.readString();
+        this.translations = in.createStringArray();
+        this.frequency = in.readInt();
+        this.percentil = in.readInt();
+        this.difficulty = in.readFloat();
+        this.learnedCount = in.readInt();
+        this.isLearned = in.readInt();
+        this.lastInterval = in.readInt();
+        this.categories = in.createStringArray();
+        this.levenshteinToCurrent = in.readInt();
+    }
+
+    public static final Parcelable.Creator<Word> CREATOR = new Parcelable.Creator<Word>() {
+        public Word createFromParcel(Parcel source) {
+            return new Word(source);
+        }
+
+        public Word[] newArray(int size) {
+            return new Word[size];
+        }
+    };
 }

@@ -6,6 +6,12 @@
     xmlns:fbutton="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <ProgressBar
+        android:id="@+id/progress"
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        style="@android:style/Widget.ProgressBar.Horizontal"/>
     <!--<android.support.design.widget.AppBarLayout-->
     <!--android:layout_height="wrap_content"-->
     <!--android:layout_width="match_parent"-->
@@ -71,10 +77,10 @@
         android:layout_alignParentRight="true"
         android:layout_marginBottom="15dp"
         android:layout_marginRight="15dp"
+        android:background="@drawable/button"
         android:ellipsize="marquee"
         android:maxLines="2"
         android:textAllCaps="false"
-        android:background="@drawable/button"
         android:textSize="18sp"/>
 
     <Button
@@ -86,8 +92,8 @@
         android:layout_alignParentLeft="true"
         android:layout_marginBottom="15dp"
         android:layout_marginLeft="15dp"
-        android:textAllCaps="false"
         android:background="@drawable/button"
+        android:textAllCaps="false"
         android:textSize="18sp"/>
 
     <Button
@@ -99,8 +105,8 @@
         android:layout_alignParentLeft="true"
         android:layout_marginBottom="15dp"
         android:layout_marginLeft="15dp"
-        android:textAllCaps="false"
         android:background="@drawable/button"
+        android:textAllCaps="false"
         android:textSize="18sp"/>
 
     <Button
@@ -108,21 +114,21 @@
         style="@style/Widget.AppCompat.Button"
         android:layout_width="160dp"
         android:layout_height="72dp"
-        android:background="@drawable/button"
         android:layout_above="@id/button_d"
         android:layout_alignParentRight="true"
         android:layout_marginBottom="15dp"
         android:layout_marginRight="15dp"
+        android:background="@drawable/button"
         android:textAllCaps="false"
         android:textSize="18sp"/>
 
     <!--<com.gc.materialdesign.views.ButtonRectangle-->
-        <!--android:layout_width="160dp"-->
-        <!--android:layout_height="72dp"-->
-        <!--android:id="@+id/button"-->
-        <!--android:background="#660000"-->
-        <!--android:layout_centerInParent="true"-->
-        <!--android:text="capitalist"-->
-        <!--android:textColor="#000000"/>-->
+    <!--android:layout_width="160dp"-->
+    <!--android:layout_height="72dp"-->
+    <!--android:id="@+id/button"-->
+    <!--android:background="#660000"-->
+    <!--android:layout_centerInParent="true"-->
+    <!--android:text="capitalist"-->
+    <!--android:textColor="#000000"/>-->
 
 </RelativeLayout>

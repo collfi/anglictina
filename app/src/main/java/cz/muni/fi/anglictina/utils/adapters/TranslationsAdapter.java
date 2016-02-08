@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import cz.muni.fi.anglictina.R;
 
@@ -16,9 +16,9 @@ import cz.muni.fi.anglictina.R;
  */
 public class TranslationsAdapter extends BaseAdapter {
     private LayoutInflater inflater;
-    private ArrayList<String> translations;
+    private List<String> translations;
 
-    public TranslationsAdapter(Context context, ArrayList<String> list) {
+    public TranslationsAdapter(Context context, List<String> list) {
         inflater = LayoutInflater.from(context);
         translations = list;
 
