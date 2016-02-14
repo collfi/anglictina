@@ -73,14 +73,14 @@
         style="@style/Widget.AppCompat.Button"
         android:layout_width="160dp"
         android:layout_height="72dp"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/button_dont_know"
         android:layout_alignParentRight="true"
-        android:layout_marginBottom="15dp"
         android:layout_marginRight="15dp"
         android:background="@drawable/button"
         android:ellipsize="marquee"
         android:maxLines="2"
         android:textAllCaps="false"
+        android:textColor="@android:color/black"
         android:textSize="18sp"/>
 
     <Button
@@ -88,12 +88,12 @@
         style="@style/Widget.AppCompat.Button"
         android:layout_width="160dp"
         android:layout_height="72dp"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/button_dont_know"
         android:layout_alignParentLeft="true"
-        android:layout_marginBottom="15dp"
         android:layout_marginLeft="15dp"
         android:background="@drawable/button"
         android:textAllCaps="false"
+        android:textColor="@android:color/black"
         android:textSize="18sp"/>
 
     <Button
@@ -107,6 +107,7 @@
         android:layout_marginLeft="15dp"
         android:background="@drawable/button"
         android:textAllCaps="false"
+        android:textColor="@android:color/black"
         android:textSize="18sp"/>
 
     <Button
@@ -120,7 +121,21 @@
         android:layout_marginRight="15dp"
         android:background="@drawable/button"
         android:textAllCaps="false"
+        android:textColor="@android:color/black"
         android:textSize="18sp"/>
+    
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="Nevím"
+        android:textAllCaps="false"
+        android:background="@drawable/button"
+        style="@style/Widget.AppCompat.Button"
+        android:id="@+id/button_dont_know"
+        android:layout_margin="15dp"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:layout_alignParentBottom="true"/>
 
     <!--<com.gc.materialdesign.views.ButtonRectangle-->
     <!--android:layout_width="160dp"-->

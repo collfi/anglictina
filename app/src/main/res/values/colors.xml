@@ -4,5 +4,7 @@
     <color name="colorPrimaryDark">#FFA000</color>
     <color name="colorAccent">#003EF8</color>
     <color name="redIncorrect">#F44336</color>
+    <color name="redclicked">#B71C1C</color>
     <color name="greenCorrect">#8BC34A</color>
+    <color name="greenclicked">#33691E</color>
 </resources>

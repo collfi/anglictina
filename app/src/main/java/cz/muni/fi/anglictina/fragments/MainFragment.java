@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 
@@ -58,10 +59,16 @@ public class MainFragment extends Fragment {
         });
 
         Button help = (Button) view.findViewById(R.id.button_help);
-
+        help.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getActivity(), "Not yet implemented.", Toast.LENGTH_SHORT).show();
+            }
+        });
         mSkill = (TextView) view.findViewById(R.id.skill);
         mSkillProgress = (CircularProgressView) view.findViewById(R.id.skill_progress);
         mSkillProgress.setProgress(0);
+
 //        mSkillProgress.getProgressDrawable().setColorFilter(new PorterDuffColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY));
         return view;
     }

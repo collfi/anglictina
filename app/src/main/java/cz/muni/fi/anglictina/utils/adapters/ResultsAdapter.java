@@ -3,6 +3,7 @@ package cz.muni.fi.anglictina.utils.adapters;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +43,7 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
 
     private List<Pair<Word, Boolean>> mResults;
     private Context mContext;
+
     public ResultsAdapter(Context context, List<Pair<Word, Boolean>> list) {
         mContext = context;
         mResults = list;
@@ -90,17 +93,30 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
             holder = new GroupViewHolder();
             holder.word = (TextView) convertView.findViewById(R.id.word);
             holder.translation = (TextView) convertView.findViewById(R.id.translation);
+            holder.correct = (TextView) convertView.findViewById(R.id.correct);
+            holder.incorrect = (TextView) convertView.findViewById(R.id.incorrect);
             convertView.setTag(holder);
         } else {
             holder = (GroupViewHolder) convertView.getTag();
         }
         holder.word.setText(mResults.get(groupPosition).first.getWord());
         holder.translation.setText(mResults.get(groupPosition).first.getTranslations()[0]);
+        holder.correct.setText(String.valueOf(mResults.get(groupPosition).first.getCorrectAnswers()));
+        holder.incorrect.setText(String.valueOf(mResults.get(groupPosition).first.getIncorrectAnswers()));
         if (mResults.get(groupPosition).second == null) {
-            convertView.setBackgroundColor(Color.WHITE);
+            holder.word.setTextColor(Color.parseColor("#000000"));
+            holder.translation.setTextColor(Color.parseColor("#000000"));
         } else {
-            convertView.setBackgroundColor(mResults.get(groupPosition).second ? Color.GREEN : Color.RED);
+            if (mResults.get(groupPosition).second) {
+                holder.word.setTextColor(mContext.getResources().getColor(R.color.greenCorrect));
+                holder.translation.setTextColor(mContext.getResources().getColor(R.color.greenCorrect));
+            } else {
+                holder.word.setTextColor(mContext.getResources().getColor(R.color.redIncorrect));
+                holder.translation.setTextColor(mContext.getResources().getColor(R.color.redIncorrect));
+            }
         }
+        holder.correct.setTextColor(mContext.getResources().getColor(R.color.greenCorrect));
+        holder.incorrect.setTextColor(mContext.getResources().getColor(R.color.redIncorrect));
         return convertView;
     }
 
@@ -119,11 +135,13 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
         }
         StringBuilder sb = new StringBuilder();
         String delim = "";
+        SharedPreferences resultsPref = mContext.getSharedPreferences("results", Context.MODE_PRIVATE); // todo contructor
         for (String s : mResults.get(groupPosition).first.getCategories()) {
-            sb.append(delim).append(s);
-            delim = "\n";
+            sb.append(delim).append(s).append(" <font color=#8BC34A>").append(resultsPref.getInt(s + "_correct", 0))
+                    .append("</font> <font color=#F44336>").append(resultsPref.getInt(s + "_incorrect", 0)).append("</font>");
+            delim = "<br>";
         }
-        holder.categories.setText(sb.toString());
+        holder.categories.setText(Html.fromHtml(sb.toString()));
         holder.change.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,6 +160,8 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
     private static class GroupViewHolder {
         TextView word;
         TextView translation;
+        TextView correct;
+        TextView incorrect;
     }
 
     private static class ChildViewHolder {

@@ -30,6 +30,9 @@ public class WordContract {
         public static final String COLUMN_NAME_TIME_TO_REPEAT = "repeatAt";
         public static final String COLUMN_NAME_LAST_INTERVAL = "lastInterval";
         public static final String COLUMN_NAME_CATEGORIES = "categories";
+        public static final String COLUMN_NAME_CORRECT_COUNT = "correct_count";
+        public static final String COLUMN_NAME_INCORRECT_COUNT = "incorrect_count";
+        public static final String COLUMN_NAME_COEFFICIENT_DIFF = "diff_coefficient";
     }
 
 }

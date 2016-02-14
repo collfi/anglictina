@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -18,6 +20,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -128,7 +131,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             builder.setPositiveButton("Send", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    new SendFeedback().execute(message.getText().toString());
+                    if (isConnected()) {
+                        new SendFeedback().execute(message.getText().toString());
+                    } else {
+                        Toast.makeText(getActivity(), "You are not connected to the Internet.", Toast.LENGTH_SHORT).show();
+                    }
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(message.getWindowToken(), 0);
                     dismiss();
@@ -146,6 +153,16 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
             final Dialog d = builder.create();
             return d;
+        }
+
+        private boolean isConnected() {
+            if (isAdded()) {
+                ConnectivityManager connectivityManager
+                        = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+                return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+            }
+            return false;
         }
 
         public class SendFeedback extends AsyncTask<String, Void, Integer> {

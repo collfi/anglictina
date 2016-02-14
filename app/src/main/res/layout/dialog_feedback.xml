@@ -6,10 +6,11 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="100dp"
+        android:minLines="2"
         android:gravity="top"
-        android:hint="Write here"
-        android:padding="10dp"
+        android:hint="Write here..."
+        android:paddingRight="25dp"
+        android:paddingLeft="25dp"
         android:inputType="textCapSentences|textMultiLine"
         android:id="@+id/message"/>
 

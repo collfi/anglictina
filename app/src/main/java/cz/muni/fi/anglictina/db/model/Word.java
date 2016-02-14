@@ -18,7 +18,44 @@ public class Word implements Parcelable {
     private int lastInterval;
     private String[] categories;
     private int levenshteinToCurrent;
+    private int correctAnswers;
+    private int incorrectAnswers;
+    private float diffCoefficient;
+
     // todo slovny druh
+
+
+    public float getDiffCoefficient() {
+        return diffCoefficient;
+    }
+
+    public void setDiffCoefficient(float diffCoefficient) {
+        this.diffCoefficient = diffCoefficient;
+    }
+
+    public int getCorrectAnswers() {
+        return correctAnswers;
+    }
+
+    public int getIncorrectAnswers() {
+        return incorrectAnswers;
+    }
+
+    public void incrementCorrect() {
+        correctAnswers++;
+    }
+
+    public void incrementIncorrect() {
+        incorrectAnswers++;
+    }
+
+    public void setCorrectAnswers(int correctAnswers) {
+        this.correctAnswers = correctAnswers;
+    }
+
+    public void setIncorrectAnswers(int incorrectAnswers) {
+        this.incorrectAnswers = incorrectAnswers;
+    }
 
     public String getWord() {
         return word;
@@ -151,6 +188,9 @@ public class Word implements Parcelable {
         dest.writeInt(this.lastInterval);
         dest.writeStringArray(this.categories);
         dest.writeInt(this.levenshteinToCurrent);
+        dest.writeInt(this.correctAnswers);
+        dest.writeInt(this.incorrectAnswers);
+        dest.writeFloat(this.diffCoefficient);
     }
 
     public Word() {
@@ -168,9 +208,12 @@ public class Word implements Parcelable {
         this.lastInterval = in.readInt();
         this.categories = in.createStringArray();
         this.levenshteinToCurrent = in.readInt();
+        this.correctAnswers = in.readInt();
+        this.incorrectAnswers = in.readInt();
+        this.diffCoefficient = in.readFloat();
     }
 
-    public static final Parcelable.Creator<Word> CREATOR = new Parcelable.Creator<Word>() {
+    public static final Creator<Word> CREATOR = new Creator<Word>() {
         public Word createFromParcel(Parcel source) {
             return new Word(source);
         }

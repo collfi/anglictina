@@ -35,7 +35,10 @@ public class WordDbHelper extends SQLiteOpenHelper {
             LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " REAL, " +
             LearnedWordEntry.COLUMN_NAME_PRONUNCIATION + " TEXT, " +
             LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL + " INTEGER, " +
+            LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT + " INTEGER, " +
+            LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT + " INTEGER, " +
             LearnedWordEntry.COLUMN_NAME_CATEGORIES + " TEXT, " +
+            LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF + " INTEGER, " +
             LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " INTEGER);";
 
     public WordDbHelper(Context context) {

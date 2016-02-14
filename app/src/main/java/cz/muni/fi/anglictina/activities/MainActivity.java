@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 WordDbHelper helper = new WordDbHelper(this);
                 SQLiteDatabase db = helper.getWritableDatabase();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words3.txt")));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words4.txt")));
 
 
                 String sql = "INSERT INTO " + WordContract.WordEntry.TABLE_NAME + " VALUES (?,?,?,?,?,?,?,?,?, ?);";
@@ -198,6 +198,7 @@ public class MainActivity extends AppCompatActivity
             PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
             AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             manager.setRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
+
         }
     }
 

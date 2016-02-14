@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,12 +53,13 @@ import cz.muni.fi.anglictina.utils.WordLevenshteinComparator;
  * Created by collfi on 27. 10. 2015.
  */
 public class LearningFragment extends Fragment implements TextToSpeech.OnInitListener {
-    public static final long DAY = 10;//60 * 60 * 24;
+    public static final long DAY = 43200;//60 * 60 * 24;
     private float mSkill;
     private Button a;
     private Button b;
     private Button c;
     private Button d;
+    private Button dontKnow;
     private TextView mWord;
     private TextView mPron;
     private SQLiteDatabase mWordsDb;
@@ -76,7 +76,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private static View longClicked;
     private int count;
     private List<Pair<Word, Boolean>> results;
-//    private OnButtonClickListener l;
 
     String[] projection = {WordContract.WordEntry.COLUMN_NAME_ID, WordContract.WordEntry.COLUMN_NAME_WORD,
             WordContract.WordEntry.COLUMN_NAME_TRANSLATIONS, WordContract.WordEntry.COLUMN_NAME_PRONUNCIATION,
@@ -108,6 +107,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b = (Button) v.findViewById(R.id.button_b);
         c = (Button) v.findViewById(R.id.button_c);
         d = (Button) v.findViewById(R.id.button_d);
+        dontKnow = (Button) v.findViewById(R.id.button_dont_know);
         mWord = (TextView) v.findViewById(R.id.word);
         mPron = (TextView) v.findViewById(R.id.pronunciation);
         mViewSkill = (TextView) v.findViewById(R.id.skill);
@@ -164,38 +164,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                     } else {
                         tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
                     }
-                } /*else {
-                    TranslationsDialogFragment.newInstance(mCurrentWord.getTranslations(), 4).
-                            show(getFragmentManager(), "translations");
-                }*/
+                }
                 return true;
             }
         });
-//        mWord.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if (Build.VERSION.SDK_INT < 21) {
-//                    tts.speak(mWord.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-//                } else {
-//                    tts.speak(mWord.getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
-//                }
-//            }
-//        });
-//        View.OnLongClickListener ll = new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                if (Build.VERSION.SDK_INT < 21) {
-//                    tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-//                } else {
-//                    tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
-//                }
-//                return true;
-//            }
-//        };
-//        a.setOnLongClickListener(ll);
-//        b.setOnLongClickListener(ll);
-//        c.setOnLongClickListener(ll);
-//        d.setOnLongClickListener(ll);
         a.setFocusable(false);
         b.setFocusable(false);
         c.setFocusable(false);
@@ -225,6 +197,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             @Override
             public void onClick(View v) {
                 if (!(v instanceof Button)) return;
+                if (v.equals(dontKnow)) {
+                    onSwipeLeft();
+                    return;
+                }
                 answer(v);
             }
 
@@ -232,21 +208,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             public void onLongClick(View v) {
                 if (!(v instanceof Button)) return;
                 longClicked = v;
-                if (direction == 0) {
-//                    if (v.equals(a)) {
-//                        TranslationsDialogFragment.newInstance(mWords.get(0).getTranslations(), 0).
-//                                show(getFragmentManager(), "translations");
-//                    } else if (v.equals(b)) {
-//                        TranslationsDialogFragment.newInstance(mWords.get(1).getTranslations(), 1).
-//                                show(getFragmentManager(), "translations");
-//                    } else if (v.equals(c)) {
-//                        TranslationsDialogFragment.newInstance(mWords.get(2).getTranslations(), 2).
-//                                show(getFragmentManager(), "translations");
-//                    } else if (v.equals(d)) {
-//                        TranslationsDialogFragment.newInstance(mWords.get(3).getTranslations(), 3).
-//                                show(getFragmentManager(), "translations");
-//                    }
-                } else {
+                if (direction == 1) {
                     if (Build.VERSION.SDK_INT < 21) {
                         tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
                     } else {
@@ -262,11 +224,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 boolean correct;
                 mWords.clear();
                 correct = false;
-                MainActivity.sIncorrect++;
-//                getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
-
 
                 if (!repeating) {
+                    MainActivity.sIncorrect++;
                     progress.incrementProgressBy(1);
                     float newWordDiff;
                     float coefficientUser = /*0.1f;*/1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
@@ -276,7 +236,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
                     mSkill = (float) (mSkill + (coefficientUser < 0.1 ? 0.1 : coefficientUser) * (0 - chanceUser));
                     newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (1 - chanceWord));
-                    updateDbNewWord(newWordDiff);
+                    updateDbNewWord(newWordDiff, correct);
 //                    //update
 //                    ContentValues cv = new ContentValues();
 //                    cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
@@ -318,6 +278,13 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //                    mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
                 }
                 results.add(new Pair<>(mCurrentWord, false));
+                SharedPreferences resultsPref = getActivity().getSharedPreferences("results", Context.MODE_PRIVATE);
+                SharedPreferences.Editor ed = resultsPref.edit();
+                for (String s : mCurrentWord.getCategories()) {
+                    ed.putInt(s + "_incorrect", resultsPref.getInt(s + "_incorrect", 0) + 1);
+                    Log.i("resultscat learn", s + "_incorrect" + " " + resultsPref.getInt(s + "_incorrect", 0) + 1);
+                }
+                ed.commit();
                 new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
             }
 
@@ -406,6 +373,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b.setOnTouchListener(onSwipeTouchListener);
         c.setOnTouchListener(onSwipeTouchListener);
         d.setOnTouchListener(onSwipeTouchListener);
+        dontKnow.setOnTouchListener(onSwipeTouchListener);
         next();
     }
 
@@ -420,10 +388,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             endSession();
             return;
         }
-        a.setTextColor(Color.BLACK);
-        b.setTextColor(Color.BLACK);
-        c.setTextColor(Color.BLACK);
-        d.setTextColor(Color.BLACK);
+//        a.setTextColor(Color.BLACK);
+//        b.setTextColor(Color.BLACK);
+//        c.setTextColor(Color.BLACK);
+//        d.setTextColor(Color.BLACK);
 //        getView().setBackgroundColor(Color.WHITE);
         a.setBackground(getResources().getDrawable(R.drawable.button));
         b.setBackground(getResources().getDrawable(R.drawable.button));
@@ -437,10 +405,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b.setPressed(false);
         c.setPressed(false);
         d.setPressed(false);
-//        a.setOnClickListener(l);
-//        b.setOnClickListener(l);
-//        c.setOnClickListener(l);
-//        d.setOnClickListener(l);
         mCurrentWord = new Word();
 
         if (!checkToRepeat()) {
@@ -456,23 +420,16 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         mWords.add(mCurrentWord);
         direction = getDirection();
         if (direction == 0) { //direction en-cz
-
             mWord.setText(mCurrentWord.getWord());
             mPron.setText(mCurrentWord.getPronunciation());
-
             Collections.shuffle(mWords);
             a.setText(mWords.get(0).getTranslations()[0]);
             b.setText(mWords.get(1).getTranslations()[0]);
             c.setText(mWords.get(2).getTranslations()[0]);
             d.setText(mWords.get(3).getTranslations()[0]);
-
-
         } else { // direction cz-en
-
             mWord.setText(mCurrentWord.getTranslations()[0]);
-//            mPron.setText(mCurrentWord.getTranslations()[0]);
-//            mPron.setText(mCurrentWord.getPronunciation()); //delete^
-
+            mPron.setText("");
             Collections.shuffle(mWords);
             a.setText(mWords.get(0).getWord());
             b.setText(mWords.get(1).getWord());
@@ -483,8 +440,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         mViewSkill.setText(String.format("%.5f", mSkill));
         float chance = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
         mChance.setText(String.format("%.2f", chance));
-
-
     }
 
     @Override
@@ -623,7 +578,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         makeButtonsUnclickable();
         boolean correct;
         mWords.clear();
-
         if (!repeating) {
             progress.incrementProgressBy(1);
             float coefficientUser = /*0.1f;*/1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
@@ -662,7 +616,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                     newWordDiff = (float) (mCurrentWord.getDifficulty() + (coefficientWord < 0.1 ? 0.1 : coefficientWord) * (0 - chanceWord));
                 }
             }
-            updateDbNewWord(newWordDiff);
+            updateDbNewWord(newWordDiff, correct);
             //update
 //            ContentValues cv = new ContentValues();
 //            cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
@@ -686,10 +640,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             if (direction == 1) {
                 if (!((Button) v).getText().equals(mCurrentWord.getWord())) {
                     correct = false;
-                    MainActivity.sIncorrect++;
+//                    MainActivity.sIncorrect++;
 //                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
                 } else {
-                    MainActivity.sCorrect++;
+//                    MainActivity.sCorrect++;
                     correct = true;
 //                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
 
@@ -697,10 +651,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             } else {
                 if (!((Button) v).getText().equals(mCurrentWord.getTranslations()[0])) {
                     correct = false;
-                    MainActivity.sIncorrect++;
+//                    MainActivity.sIncorrect++;
 //                    getView().setBackgroundColor(getResources().getColor(R.color.redIncorrect));
                 } else {
-                    MainActivity.sCorrect++;
+//                    MainActivity.sCorrect++;
                     correct = true;
 //                    getView().setBackgroundColor(getResources().getColor(R.color.greenCorrect));
                 }
@@ -719,6 +673,16 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
         }
         results.add(new Pair<>(mCurrentWord, correct));
+        SharedPreferences resultsPref = getActivity().getSharedPreferences("results", Context.MODE_PRIVATE);
+        SharedPreferences.Editor ed = resultsPref.edit();
+        for (String s : mCurrentWord.getCategories()) {
+            if (correct) {
+                ed.putInt(s + "_correct", resultsPref.getInt(s + "_correct", 0) + 1);
+            } else {
+                ed.putInt(s + "_incorrect", resultsPref.getInt(s + "_incorrect", 0) + 1);
+            }
+        }
+        ed.apply();
         if (correct) {
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -727,11 +691,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 }
             }, 1000);
         } else {
+            v.setBackground(getResources().getDrawable(R.drawable.button_incorrect_clicked));
             new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
         }
     }
 
-    public void updateDbNewWord(float newWordDiff) {
+    public void updateDbNewWord(float newWordDiff, boolean correct) {
         //update
         ContentValues cv = new ContentValues();
         if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) { //check
@@ -763,22 +728,39 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         cv = new ContentValues();
         cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
 //            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
-        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);
-        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);
+        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);//todo + random 0.9-1.1
+        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);//todo + random 0.9-1.1
+        cv.put(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF, 2.5);
         cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
         cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
         cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
+        if (correct) {
+            mCurrentWord.incrementCorrect();
+            cv.put(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT, mCurrentWord.getCorrectAnswers());
+        } else {
+            mCurrentWord.incrementIncorrect();
+            cv.put(LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT, mCurrentWord.getIncorrectAnswers());
+        }
         mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
     }
 
     public void updateDbRepeating(boolean correct) {
         ContentValues cv = new ContentValues();
 //                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
-        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1));
-        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct, mCurrentWord.getLearnedCount(), 1) -
-                getTimeSeconds());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mPron.getText().toString());
-//                cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, ((Button) v).getText().toString());
+        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct));
+        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct) - getTimeSeconds());
+        if (correct) {
+            mCurrentWord.incrementCorrect();
+            cv.put(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT, mCurrentWord.getCorrectAnswers());
+            float newCoeff = mCurrentWord.getDiffCoefficient() + 0.59f;
+            cv.put(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF, newCoeff > 2.5 ? 2.5 : newCoeff);
+
+        } else {
+            mCurrentWord.incrementIncorrect();
+            cv.put(LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT, mCurrentWord.getIncorrectAnswers());
+            float newCoeff = mCurrentWord.getDiffCoefficient() - 0.5204f;
+            cv.put(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF, newCoeff < 1.3 ? 1.3 : newCoeff);
+        }
         mWordsDb.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
 
     }
@@ -788,20 +770,19 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
      * Computes when current word should be reviewed.
      *
      * @param correct true if user answered correctly
-     * @param count   how many times user answered to this word
-     * @param mozno   placeholder
      * @return time in seconds when current word should be reviewed
      * For debug purposes returns current time + 10 seconds
      */
-    public long computeRepeatTime(boolean correct, int count, int mozno) {
-        return getTimeSeconds() + 10;
-//        if (!correct) return getTimeSeconds() + DAY;
-//        if (mCurrentWordLastInterval <= DAY) { //*1.1
-//            return DAY * 6;
-//        } else {
-//            long coefficient = 1; //todo mCurrentWord.getLastInterval - 0.8 + 0.28q - 0.02q^2 [1.3, 2.5]
-//            return mCurrentWordLastInterval * coefficient; //todo random 0.95-1.05
-//        }
+    public long computeRepeatTime(boolean correct/*, int count, int mozno*/) {
+//        return getTimeSeconds() + 10;
+        if (!correct) return getTimeSeconds() + DAY;
+        Random r = new Random(System.nanoTime());
+        if (mCurrentWord.getLastInterval() <= DAY * 1.1) {
+            return (int) (DAY * 6 * (r.nextFloat() * (1.1 - 0.9) + 0.9));
+        } else {
+            return (int) (mCurrentWord.getLastInterval() * mCurrentWord.getDiffCoefficient()
+                    * (r.nextFloat() * (1.1 - 0.9) + 0.9));
+        }
     }
 
     /**
@@ -820,10 +801,11 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setTranslations(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
             mCurrentWord.setPronunciation(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION)));
             mCurrentWord.setLastInterval(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL)));
-//            w1.setDifficulty(cur.getFloat(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_DIFFICULTY)));
             mCurrentWord.setCategories(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+            mCurrentWord.setIncorrectAnswers(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT)));
+            mCurrentWord.setCorrectAnswers(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT)));
+            mCurrentWord.setDiffCoefficient(cur.getFloat(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF)));
             Log.i("zzzzzz", "check to repeat: " + arrayToString(cur.getString(cur.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")));
-
             cur.close();
             return true;
         } else {
@@ -850,7 +832,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setCategories(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
             mCurrentWord.setLearnedCount(currentCursor.getInt(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
         }
-        Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";")));
+        Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";")));
         currentCursor.close();
     }
 
