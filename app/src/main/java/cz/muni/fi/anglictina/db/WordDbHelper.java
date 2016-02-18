@@ -26,6 +26,7 @@ public class WordDbHelper extends SQLiteOpenHelper {
             WordEntry.COLUMN_NAME_LEARNED_COUNT + " INTEGER, " +
             WordEntry.COLUMN_NAME_LEARNED + " INTEGER, " +
             WordEntry.COLUMN_NAME_CATEGORIES + " TEXT, " +
+            WordEntry.COLUMN_NAME_HUMAN_CATEGORIES + " TEXT, " +
             WordEntry.COLUMN_NAME_PRONUNCIATION + " TEXT);";
 
     private static final String CREATE_LEARNED_WORD_TABLE = "CREATE TABLE " + LearnedWordEntry.TABLE_NAME +
@@ -38,6 +39,7 @@ public class WordDbHelper extends SQLiteOpenHelper {
             LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT + " INTEGER, " +
             LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT + " INTEGER, " +
             LearnedWordEntry.COLUMN_NAME_CATEGORIES + " TEXT, " +
+            LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES + " TEXT, " +
             LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF + " INTEGER, " +
             LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " INTEGER);";
 

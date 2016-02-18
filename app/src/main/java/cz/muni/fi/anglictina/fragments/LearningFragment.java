@@ -64,8 +64,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private TextView mPron;
     private SQLiteDatabase mWordsDb;
     private TextToSpeech tts;
-    private TextView mViewSkill;
-    private TextView mChance;
+//    private TextView mViewSkill;
+//    private TextView mChance;
     private ProgressBar progress;
     private SharedPreferences mPreferences;
     private List<Word> mWords;
@@ -110,8 +110,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         dontKnow = (Button) v.findViewById(R.id.button_dont_know);
         mWord = (TextView) v.findViewById(R.id.word);
         mPron = (TextView) v.findViewById(R.id.pronunciation);
-        mViewSkill = (TextView) v.findViewById(R.id.skill);
-        mChance = (TextView) v.findViewById(R.id.chance);
+//        mViewSkill = (TextView) v.findViewById(R.id.skill);
+//        mChance = (TextView) v.findViewById(R.id.chance);
         progress = (ProgressBar) v.findViewById(R.id.progress);
         progress.setMax(count);
         progress.setProgress(0);
@@ -154,7 +154,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        c.setOnClickListener(l);
 //        d.setOnClickListener(l);
 
-        mViewSkill.setText(String.valueOf(mSkill));
+//        mViewSkill.setText(String.valueOf(mSkill));
         mWord.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -280,7 +280,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 results.add(new Pair<>(mCurrentWord, false));
                 SharedPreferences resultsPref = getActivity().getSharedPreferences("results", Context.MODE_PRIVATE);
                 SharedPreferences.Editor ed = resultsPref.edit();
-                for (String s : mCurrentWord.getCategories()) {
+                for (String s : mCurrentWord.getHumanCategories()) {
                     ed.putInt(s + "_incorrect", resultsPref.getInt(s + "_incorrect", 0) + 1);
                     Log.i("resultscat learn", s + "_incorrect" + " " + resultsPref.getInt(s + "_incorrect", 0) + 1);
                 }
@@ -437,9 +437,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             d.setText(mWords.get(3).getWord());
         }
 
-        mViewSkill.setText(String.format("%.5f", mSkill));
-        float chance = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
-        mChance.setText(String.format("%.2f", chance));
+//        mViewSkill.setText(String.format("%.5f", mSkill));
+//        float chance = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
+//        mChance.setText(String.format("%.2f", chance));
     }
 
     @Override
@@ -675,7 +675,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         results.add(new Pair<>(mCurrentWord, correct));
         SharedPreferences resultsPref = getActivity().getSharedPreferences("results", Context.MODE_PRIVATE);
         SharedPreferences.Editor ed = resultsPref.edit();
-        for (String s : mCurrentWord.getCategories()) {
+        for (String s : mCurrentWord.getHumanCategories()) {
             if (correct) {
                 ed.putInt(s + "_correct", resultsPref.getInt(s + "_correct", 0) + 1);
             } else {
@@ -727,13 +727,15 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         //save to learned
         cv = new ContentValues();
         cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mCurrentWord.getWord());
-//            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);
-        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + DAY);//todo + random 0.9-1.1
-        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, DAY);//todo + random 0.9-1.1
+        Random r = new Random(System.nanoTime());
+        long ttr = (int) (DAY * (r.nextFloat() * (1.1 - 0.9) + 0.9));
+        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, getTimeSeconds() + ttr);
+        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, ttr);
         cv.put(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF, 2.5);
         cv.put(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION, mCurrentWord.getPronunciation());
         cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
         cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
+        cv.put(LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES, arrayToString(mCurrentWord.getHumanCategories()));
         if (correct) {
             mCurrentWord.incrementCorrect();
             cv.put(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT, mCurrentWord.getCorrectAnswers());
@@ -746,9 +748,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
     public void updateDbRepeating(boolean correct) {
         ContentValues cv = new ContentValues();
-//                cv.put(LearnedWordEntry.COLUMN_NAME_WORD, mWord.getText().toString());
-        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, computeRepeatTime(correct));
-        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, computeRepeatTime(correct) - getTimeSeconds());
+        long ttr = computeRepeatTime(correct);
+        cv.put(LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT, ttr);
+        cv.put(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL, ttr - getTimeSeconds());
         if (correct) {
             mCurrentWord.incrementCorrect();
             cv.put(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT, mCurrentWord.getCorrectAnswers());
@@ -778,9 +780,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         if (!correct) return getTimeSeconds() + DAY;
         Random r = new Random(System.nanoTime());
         if (mCurrentWord.getLastInterval() <= DAY * 1.1) {
-            return (int) (DAY * 6 * (r.nextFloat() * (1.1 - 0.9) + 0.9));
+            return getTimeSeconds() + (int) (DAY * 6 * (r.nextFloat() * (1.1 - 0.9) + 0.9));
         } else {
-            return (int) (mCurrentWord.getLastInterval() * mCurrentWord.getDiffCoefficient()
+            return getTimeSeconds() + (int) (mCurrentWord.getLastInterval() * mCurrentWord.getDiffCoefficient()
                     * (r.nextFloat() * (1.1 - 0.9) + 0.9));
         }
     }
@@ -802,6 +804,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setPronunciation(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_PRONUNCIATION)));
             mCurrentWord.setLastInterval(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_LAST_INTERVAL)));
             mCurrentWord.setCategories(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+            mCurrentWord.setHumanCategories(cur.getString(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES)).split(";"));
             mCurrentWord.setIncorrectAnswers(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT)));
             mCurrentWord.setCorrectAnswers(cur.getInt(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT)));
             mCurrentWord.setDiffCoefficient(cur.getFloat(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF)));
@@ -830,9 +833,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setPronunciation(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PRONUNCIATION)));
             mCurrentWord.setDifficulty(currentCursor.getFloat(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_DIFFICULTY)));
             mCurrentWord.setCategories(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+            mCurrentWord.setHumanCategories(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_HUMAN_CATEGORIES)).split(";"));
             mCurrentWord.setLearnedCount(currentCursor.getInt(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
         }
-        Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";")));
+//        Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";")));
         currentCursor.close();
     }
 
@@ -1068,6 +1072,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 w.setLearnedCount(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
                 w.setPercentil(cursor.getInt(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PERCENTIL)));
                 w.setCategories(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+                w.setHumanCategories(cursor.getString(cursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_HUMAN_CATEGORIES)).split(";"));
                 w.setLevenshteinToCurrent(levenshteinDistance(mCurrentWord.getWord(), w.getWord()));
                 mWords.add(w);
             } while (cursor.moveToNext());
@@ -1162,90 +1167,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             return d;
         }
     }
-
-//    public static class TranslationsDialogFragment extends DialogFragment {
-//
-//        private ArrayList<String> translations;
-//        private int buttonPosition;
-//
-//        public static TranslationsDialogFragment newInstance(String[] t, int position) {
-//            TranslationsDialogFragment fragment = new TranslationsDialogFragment();
-//            Bundle args = new Bundle();
-//            args.putStringArray("translations", t);
-//            args.putInt("position", position);
-//            fragment.setArguments(args);
-//            return fragment;
-//        }
-//
-//        @Override
-//        public void onCreate(@Nullable Bundle savedInstanceState) {
-//            super.onCreate(savedInstanceState);
-//            if (getArguments() != null) {
-//                String[] t = getArguments().getStringArray("translations");
-//                buttonPosition = getArguments().getInt("position");
-//                translations = new ArrayList<>();
-//                Collections.addAll(translations, t);
-//            }
-//        }
-//
-//        @Override
-//        public Dialog onCreateDialog(Bundle savedInstanceState) {
-//            // Use the Builder class for convenient dialog construction
-//            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-//
-//            // Inflate and set the layout for the dialog
-//            // Pass null as the parent view because its going in the dialog layout
-//            View view = getActivity().getLayoutInflater().inflate(R.layout.dialog_translations, null);
-//
-//            builder.setView(view);
-//
-//
-//            final Dialog d = builder.create();
-//            ListView list = (ListView) view.findViewById(R.id.translations);
-//            list.setAdapter(new TranslationsAdapter(getActivity(), translations));
-//            list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//                @Override
-//                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//                    if (parent.getCount() == 1 || position == 0) {
-//                        dismiss();
-//                        return;
-//                    }
-//                    LearningFragment fragment = (LearningFragment) getFragmentManager().
-//                            findFragmentById(R.id.learning_fragment);
-//                    String word = null;
-//                    String[] trans = null;
-//                    if (buttonPosition < 4) {
-//                        ((Button) longClicked).setText(translations.get(position));
-//                        swap(fragment.getWords().get(buttonPosition).getTranslations(), 0, position);
-//                        trans = fragment.getWords().get(buttonPosition).getTranslations();
-//                        word = fragment.getWords().get(buttonPosition).getWord();
-//                    } else {
-//                        fragment.getWord().setText(translations.get(position));
-//                        swap(fragment.getCurrentWord().getTranslations(), 0, position);
-//                        trans = fragment.getCurrentWord().getTranslations();
-//                        word = fragment.getCurrentWord().getWord();
-////                        longClicked.postInvalidate();
-//                    }
-//                    SQLiteDatabase db = new WordDbHelper(getActivity()).getWritableDatabase();
-//                    ContentValues cv = new ContentValues();
-//                    cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(
-//                            trans));
-//                    db.update(LearnedWordEntry.TABLE_NAME, cv, LearnedWordEntry.COLUMN_NAME_WORD
-//                            + " = ?", new String[]{word});
-//                    cv.clear();
-//                    cv.put(WordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(
-//                            trans));
-//                    db.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD
-//                            + " = ?", new String[]{word});
-//
-//                    db.close();
-//                    dismiss();
-//                }
-//            });
-//            return d;
-//        }
-//
-//    }
 
     //https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java //Not recursive and faster
     public int levenshteinDistance(CharSequence lhs, CharSequence rhs) {

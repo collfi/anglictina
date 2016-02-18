@@ -53,7 +53,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 return true;
             }
         });
-
         PreferenceCategory p = (PreferenceCategory) findPreference("pref_general");
 
         Preference feedback = findPreference("pref_feedback");
@@ -66,6 +65,15 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 return false;
             }
         });
+
+        Preference about = findPreference("pref_about");
+        about.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Toast.makeText(getActivity(), "Zatím nic.", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
     }
 
     @Override
@@ -75,11 +83,19 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
 
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                           String key) {
+        hideKeyboard(getActivity().getCurrentFocus());
         Preference pref = findPreference(key);
+
         if (pref instanceof EditTextPreference) {
             EditTextPreference etp = (EditTextPreference) pref;
+            if (etp.getText().equals("") || Integer.valueOf(etp.getText()) == 0) {
+                Toast.makeText(getActivity(), "Pocet musi byt vecsi ako 1.", Toast.LENGTH_SHORT).show();
+                etp.setSummary("1");
+                etp.setText("1");
+                etp.callChangeListener("1");
+                return;
+            }
             pref.setSummary(etp.getText());
-            hideKeyboard(getActivity().getCurrentFocus());
         }
     }
 
@@ -99,18 +115,19 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     }
 
 
-    public void showKeyboard(){
+    public void showKeyboard() {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
     }
 
     public void hideKeyboard(View view) {
         InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(view.getWindowToken(),0);
+        imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
     }
 
     public static class FeedbackDialog extends DialogFragment {
         private EditText message;
+
         @Override
         public void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -145,7 +162,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(message.getWindowToken(),0);
+                    imm.hideSoftInputFromWindow(message.getWindowToken(), 0);
                     dismiss();
                 }
             });

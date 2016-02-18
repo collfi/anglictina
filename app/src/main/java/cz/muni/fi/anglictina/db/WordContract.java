@@ -18,6 +18,7 @@ public class WordContract {
         public static final String COLUMN_NAME_LEARNED_COUNT = "learned_count";
         public static final String COLUMN_NAME_LEARNED = "learned";
         public static final String COLUMN_NAME_CATEGORIES = "categories";
+        public static final String COLUMN_NAME_HUMAN_CATEGORIES = "human_categories";
     }
 
     public static abstract class LearnedWordEntry implements BaseColumns {
@@ -33,6 +34,7 @@ public class WordContract {
         public static final String COLUMN_NAME_CORRECT_COUNT = "correct_count";
         public static final String COLUMN_NAME_INCORRECT_COUNT = "incorrect_count";
         public static final String COLUMN_NAME_COEFFICIENT_DIFF = "diff_coefficient";
+        public static final String COLUMN_NAME_HUMAN_CATEGORIES = "human_categories";
     }
 
 }

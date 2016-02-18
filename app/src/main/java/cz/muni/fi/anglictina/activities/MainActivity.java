@@ -10,6 +10,7 @@ import android.content.pm.ActivityInfo;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -29,8 +30,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
@@ -64,17 +69,15 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         if (!getDatabasePath("words.db").exists()) {
-            Toast.makeText(this, "start", Toast.LENGTH_SHORT).show();
             try {
                 WordDbHelper helper = new WordDbHelper(this);
                 SQLiteDatabase db = helper.getWritableDatabase();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words4.txt")));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words6.txt")));
 
 
-                String sql = "INSERT INTO " + WordContract.WordEntry.TABLE_NAME + " VALUES (?,?,?,?,?,?,?,?,?, ?);";
+                String sql = "INSERT INTO " + WordContract.WordEntry.TABLE_NAME + " VALUES (?,?,?,?,?,?,?,?,?,?,?);";
                 SQLiteStatement statement = db.compileStatement(sql);
                 db.beginTransaction();
-                //todo bulk insert
                 String line = reader.readLine();
                 while (line != null) {
 //                    ContentValues values = new ContentValues();
@@ -101,7 +104,9 @@ public class MainActivity extends AppCompatActivity
                     statement.bindLong(7, 0);
                     statement.bindLong(8, 0);
                     statement.bindString(9, s[5]);
-                    statement.bindString(10, s[4]);
+                    statement.bindString(10, s[6]);
+                    statement.bindString(11, s[4]);
+
                     statement.execute();
 
                     line = reader.readLine();
@@ -113,16 +118,13 @@ public class MainActivity extends AppCompatActivity
             } catch (IOException ioe) {
                 Log.e("Main Activity", "error loading db");
             }
-            Toast.makeText(this, "end", Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, "exists", Toast.LENGTH_SHORT).show();
         }
 
         SharedPreferences sp = getSharedPreferences("stats", Context.MODE_PRIVATE);
         sCorrect = sp.getInt("correct", 0);
         sIncorrect = sp.getInt("incorrect", 0);
 
-//        firstTime();
+        firstTime();
     }
 
     @Override
@@ -155,6 +157,8 @@ public class MainActivity extends AppCompatActivity
             dialog.show(getSupportFragmentManager(), "feedback");
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        } else if (id == R.id.nav_about) {
+            Toast.makeText(this, "Zatím nic.", Toast.LENGTH_SHORT).show();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.learning_layout);
@@ -175,7 +179,7 @@ public class MainActivity extends AppCompatActivity
             TextView i = (TextView) v.findViewById(R.id.incorrect);
             c.setText(String.valueOf(MainActivity.sCorrect));
             i.setText(String.valueOf(MainActivity.sIncorrect));
-            builder.setPositiveButton("Ok", null).setView(v);
+            builder.setPositiveButton("OK", null).setView(v);
             // Create the AlertDialog object and return it
             AlertDialog a = builder.create();
             float density = getResources().getDisplayMetrics().density;
@@ -199,6 +203,7 @@ public class MainActivity extends AppCompatActivity
             AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             manager.setRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
 
+            new PostInfo().execute();
         }
     }
 
@@ -208,8 +213,62 @@ public class MainActivity extends AppCompatActivity
         db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
         db.close();
 //        new TestTask2().execute();
+    }
+
+    public class PostInfo extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Device: ").append(Build.MANUFACTURER).append(" ").append(Build.DEVICE)
+                        .append(" Android version: ").append(Build.VERSION.RELEASE)
+                .append(" Time: ").append(System.currentTimeMillis());
+                String data = sb.toString();
+                Log.i("post output", data);
+                URL url = new URL("http://collfi.pythonanywhere.com/info");
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "text/plain");
+                connection.setDoOutput(true);
+                DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
+                dStream.writeBytes(data);
+                dStream.flush();
+                dStream.close();
+                int responseCode = connection.getResponseCode();
+                Log.d("POST", "MSG " + connection.getResponseMessage());
+                Log.d("POST RES", "" + responseCode);
+                if (responseCode != 200) {
+                    return null;
+                }
+//                final StringBuilder output = new StringBuilder("Request URL " + url);
+//                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
+//                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//                String line = "";
+//                StringBuilder responseOutput = new StringBuilder();
+//                while ((line = br.readLine()) != null) {
+//                    responseOutput.append(line);
+//                }
+//                br.close();
+//
+//                Log.d("output", responseOutput.toString());
+//
+//                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
+
+
+            } catch (MalformedURLException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+            return null;
+        }
 
     }
+
 
     public class Levenshtein extends AsyncTask<Void, Pair<Integer, String>, Void> {
         @Override

@@ -43,30 +43,30 @@
         android:gravity="center"
         android:textSize="20sp"/>
 
-    <TextView
-        android:id="@+id/skill"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/pronunciation"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:textSize="44sp"/>
+    <!--<TextView-->
+        <!--android:id="@+id/skill"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_below="@id/pronunciation"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_marginTop="20dp"-->
+        <!--android:textSize="44sp"/>-->
 
-    <TextView
-        android:id="@+id/chance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/warning"
-        android:layout_centerHorizontal="true"
-        android:textSize="44sp"/>
+    <!--<TextView-->
+        <!--android:id="@+id/chance"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_above="@+id/button_a"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:textSize="44sp"/>-->
 
-    <TextView
-        android:id="@+id/warning"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/button_a"
-        android:gravity="center"
-        android:text="@string/tip_warning"/>
+    <!--<TextView-->
+        <!--android:id="@+id/warning"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_above="@+id/button_a"-->
+        <!--android:gravity="center"-->
+        <!--android:text="@string/tip_warning"/>-->
 
     <Button
         android:id="@+id/button_d"

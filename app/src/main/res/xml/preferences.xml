@@ -9,7 +9,7 @@
             android:key="pref_count"
             app:dialogLayout="@layout/edittextpreference_dialog"
             app:title="Pocet slovicek"
-            android:imeOptions="actionGo"/>
+            android:imeOptions="actionDone"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="pref_general"

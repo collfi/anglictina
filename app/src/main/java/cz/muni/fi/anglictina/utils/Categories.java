@@ -1,5 +1,8 @@
 package cz.muni.fi.anglictina.utils;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by collfi on 9. 2. 2016.
  */
@@ -99,114 +102,176 @@ public class Categories {
     };
 
     public static final String[] categoriesForHuman = {
+            "Podstatné jméno",
             "Přídavné jméno",
-            "Přídavné jméno", //adj:pert?????
-            "Přídavné jméno: Lidé",
+            "Sloveso",
             "Příslovce",
-            "Příslovce",
-            "Zvířata",
-            "Lidské tělo",
-            "Péče o tělo",
-            "Budovy",
-            "Podstatné jméno: Obchod",
-            "Sloveso: Obchod",
-            "Kalendár",
-            "Auta",
-            "Město",
-            "Oblečení",
-            "Barvy",
-            "Zložená slova",
-            "Počítač",
-            "Jídlo & pití",
-            "Rodina",
-            "Frekvence",
-            "Rostliny a zahrada",
-            "Zeměpisné pojmy",
-            "Zdraví",
-            "Svátky",
-            "Dom",
-            "Imaginární postavy",
-            "Zaměstnání",
-            "Zákon",
-            "Matematika",
-            "Peníze",
-            "Hudba",
-            "Národnosti",
-            "Podstatné jméno: Zvířata",
-            "Podstatné jméno: Objekty", //artifact????
-            "Podstatné jméno: Lidské tělo",
-            "Podstatné jméno: Poznání",
-            "Podstatné jméno: Komunikace",
-            "Podstatné jméno: Události",
-            "Podstatné jméno: Pocity",
-            "Podstatné jméno: Jídlo",
-            "Podstatné jméno: Poloha",
-            "Podstatné jméno: Pohyb",
-            "Podstatné jméno: Objekty",
-            "Podstatné jméno: Osoby",
-            "Podstatné jméno: Javy",
-            "Podstatné jméno: Rostliny",
-            "Podstatné jméno: Vlastnictví",
-            "Podstatné jméno: Procesy",
-            "Podstatné jméno: Množství",
-            "Podstatné jméno: Vztahy",
-            "Podstatné jméno: Tvary",
-            "Podstatné jméno: Stavy",
-            "Podstatné jméno: Látky",
-            "Podstatné jméno: Čas",
-            "Podstatné jméno: Výběr", // tops???
-            "Podstatné jméno: Vlastnosti",
-            "Kancelář",
-            "Ostatní",
-            "Sloveso: Ostatní",
-            "Časti",
-            "Lidé",
             "Předložky",
-            "Výslovnost",
-            "Interpunkční znaménka",
+            "Auta",
+            "Barvy",
+            "Budovy",
+            "Čas",
+            "Části",
             "Čtení",
-            "Věda",
-            "Zabezpečení",
-            "Škola",
+            "Domácnost",
+            "Emoce",
+            "Frekvence",
+            "Hudba",
+            "Imaginární postavy",
+            "Interpunkční znaménka",
+            "Jevy",
+            "Jídlo & pití",
+            "Kalendár",
+            "Kancelář",
+            "Komunikace",
             "Kouření",
-            "Sport",
+            "Látky",
+            "Lidé",
+            "Lidské tělo",
+            "Matematika",
+            "Město",
+            "Množství",
+            "Národnosti",
             "Nástroje",
-            "Přeprava",
-            "Sloveso: Lidské tělo",
-            "Sloveso: Poznání",
-            "Sloveso: Komunikace",
-            "Sloveso: Soutěžení",
-            "Sloveso: Spotřeba",
-            "Sloveso: Tvoření",
-            "Sloveso: Emoce",
-            "Sloveso: Změna",
-            "Sloveso: Pohyb",
-            "Sloveso: Vnímaní",
-            "Sloveso: Vlastnictví",
-            "Sloveso: Sociální",
-            "Sloveso: Statické",
-            "Sloveso: Počasí",
+            "Obchod",
+            "Objekty",
+            "Oblečení",
+            "Ostatní",
+            "Péče o tělo",
+            "Peníze",
+            "Pocity",
             "Počasí",
-            "Zima",
+            "Počítač",
+            "Pohyb",
+            "Poloha",
+            "Poznání",
+            "Procesy",
+            "Přeprava",
+            "Rodina",
+            "Rostliny a zahrada",
             "Slova končící na -ful",
             "Slova končící na -less",
+            "Sociální",
+            "Soutěžení",
+            "Sport",
+            "Spotřeba",
+            "Statické",
+            "Stavy",
+            "Svátky",
+            "Škola",
+            "Tvary",
+            "Tvoření",
+            "Události",
+            "Věda",
+            "Vlastnictví",
+            "Vlastnosti",
+            "Vnímaní",
+            "Výslovnost",
+            "Vztahy",
+            "Zabezpečení",
+            "Zákon",
+            "Zaměstnání",
+            "Zdraví",
+            "Zeměpisné pojmy",
+            "Zima",
+            "Zložená slova",
+            "Změna",
+            "Zvířata"
     };
 
-    public static String toHuman(String c) {
-        for (int i = 0; i < categories.length; i++) {
-            if (categories[i].equals(c)) {
-                return categoriesForHuman[i];
-            }
-        }
-        return c;
-    }
+    public static final List<String> categoriesForHumanAscii = Arrays.asList(
+            "Podstatne jmeno",
+            "Pridavne jmeno",
+            "Sloveso",
+            "Prislovce",
+            "Predlozky",
+            "Auta",
+            "Barvy",
+            "Budovy",
+            "Cas",
+            "Casti",
+            "Cteni",
+            "Domacnost",
+            "Emoce",
+            "Frekvence",
+            "Hudba",
+            "Imaginarni postavy",
+            "Interpunkcni znamenka",
+            "Jevy",
+            "Jidlo & piti",
+            "Kalendar",
+            "Kancelar",
+            "Komunikace",
+            "Koureni",
+            "Latky",
+            "Lide",
+            "Lidske telo",
+            "Matematika",
+            "Mesto",
+            "Mnozstvi",
+            "Narodnosti",
+            "Nastroje",
+            "Obchod",
+            "Objekty",
+            "Obleceni",
+            "Ostatni",
+            "Pece o telo",
+            "Penize",
+            "Pocity",
+            "Pocasi",
+            "Pocitac",
+            "Pohyb",
+            "Poloha",
+            "Poznani",
+            "Procesy",
+            "Preprava",
+            "Rodina",
+            "Rostliny a zahrada",
+            "Slova koncici na -ful",
+            "Slova koncici na -less",
+            "Socialni",
+            "Soutezeni",
+            "Sport",
+            "Spotreba",
+            "Staticke",
+            "Stavy",
+            "Svatky",
+            "Skola",
+            "Tvary",
+            "Tvoreni",
+            "Udalosti",
+            "Veda",
+            "Vlastnictvi",
+            "Vlastnosti",
+            "Vnimani",
+            "Vyslovnost",
+            "Vztahy",
+            "Zabezpeceni",
+            "Zakon",
+            "Zamestnani",
+            "Zdravi",
+            "Zemepisne pojmy",
+            "Zima",
+            "Zlozena slova",
+            "Zmena",
+            "Zvirata"
+    );
 
-    public static String fromHuman(String c) {
-        for (int i = 0; i < categoriesForHuman.length; i++) {
-            if (categoriesForHuman[i].equals(c)) {
-                return categories[i];
-            }
-        }
-        return c;
-    }
+//    public static String toHuman(String c) {
+//        for (int i = 0; i < categories.length; i++) {
+//            if (categories[i].equals(c)) {
+//                return categoriesForHuman[i];
+//            }
+//        }
+//        return c;
+//    }
+//
+//    public static String fromHuman(String c) {
+//        for (int i = 0; i < categoriesForHuman.length; i++) {
+//            if (categoriesForHuman[i].equals(c)) {
+//                return categories[i];
+//            }
+//        }
+//        return c;
+//    }
 }

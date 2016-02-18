@@ -14,10 +14,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.github.rahatarmanahmed.cpv.CircularProgressView;
-
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.activities.LearnActivity;
+import cz.muni.fi.anglictina.activities.MainActivity;
 import cz.muni.fi.anglictina.activities.SettingsActivity;
 
 /**
@@ -25,9 +24,12 @@ import cz.muni.fi.anglictina.activities.SettingsActivity;
  */
 public class MainFragment extends Fragment {
     private SharedPreferences mPreferences;
-    private TextView mSkill;
-    private CircularProgressView mSkillProgress;
+//    private TextView mSkill;
+//    private CircularProgressView mSkillProgress;
     private int i;
+    private TextView mSkill;
+    private TextView mCorrect;
+    private TextView mIncorrect;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,6 +42,9 @@ public class MainFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         Button learn = (Button) view.findViewById(R.id.button_start);
+        mSkill = (TextView) view.findViewById(R.id.skill);
+        mCorrect = (TextView) view.findViewById(R.id.correct);
+        mIncorrect = (TextView) view.findViewById(R.id.incorrect);
         learn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -62,12 +67,12 @@ public class MainFragment extends Fragment {
         help.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getActivity(), "Not yet implemented.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Zatím nic.", Toast.LENGTH_SHORT).show();
             }
         });
-        mSkill = (TextView) view.findViewById(R.id.skill);
-        mSkillProgress = (CircularProgressView) view.findViewById(R.id.skill_progress);
-        mSkillProgress.setProgress(0);
+//        mSkill = (TextView) view.findViewById(R.id.skill);
+//        mSkillProgress = (CircularProgressView) view.findViewById(R.id.skill_progress);
+//        mSkillProgress.setProgress(0);
 
 //        mSkillProgress.getProgressDrawable().setColorFilter(new PorterDuffColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY));
         return view;
@@ -76,9 +81,12 @@ public class MainFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mSkill.setText(String.valueOf((int) mPreferences.getFloat("skill", 0)));
-        mSkillProgress.setProgress(((int) ((mPreferences.getFloat("skill", 0) % 1) * 100)));
-        mSkillProgress.startAnimation();
+        mSkill.setText(String.format("%.2f", mPreferences.getFloat("skill", 0)));
+        mCorrect.setText(String.valueOf(MainActivity.sCorrect));
+        mIncorrect.setText(String.valueOf(MainActivity.sIncorrect));
+//        mSkill.setText(String.valueOf((int) mPreferences.getFloat("skill", 0)));
+//        mSkillProgress.setProgress(((int) ((mPreferences.getFloat("skill", 0) % 1) * 100)));
+//        mSkillProgress.startAnimation();
         Log.i("QQQ", String.valueOf((int) mPreferences.getFloat("skill", 0)) + " " + ((int) ((mPreferences.getFloat("skill", 0) % 1) * 100)));
 //        SQLiteDatabase db = new WordDbHelper(getActivity()).getWritableDatabase();
 //        Cursor c = db.rawQuery("SELECT " + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + ", " +

@@ -21,8 +21,8 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,14 +107,12 @@ public class LearnedWordsFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 filter(mFilter.getText().toString());
-                Toast.makeText(getActivity(), mFilter.getText().toString(), Toast.LENGTH_SHORT).show();
             }
         });
         mFilter.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 filter(mFilter.getText().toString());
-                Toast.makeText(getActivity(), mFilter.getText().toString(), Toast.LENGTH_SHORT).show();
                 mFilter.clearFocus();
                 hideSoftKeyboard();
                 mFilter.dismissDropDown();
@@ -144,13 +142,16 @@ public class LearnedWordsFragment extends Fragment {
         @Override
         protected List<Pair<Word, Boolean>> doInBackground(String... params) {
             SQLiteDatabase db = new WordDbHelper(getActivity()).getWritableDatabase();
+
             Cursor cursor = null;
             if (params.length == 0) {
                 cursor = db.rawQuery("SELECT * FROM " + WordContract.LearnedWordEntry.TABLE_NAME, null);
             } else {
+                String query = Normalizer.normalize(params[0], Normalizer.Form.NFD)
+                        .replaceAll("\\p{InCOMBINING_DIACRITICAL_MARKS}+", "");
                 cursor = db.rawQuery("SELECT * FROM " + WordContract.LearnedWordEntry.TABLE_NAME
-                        + " WHERE " + WordContract.LearnedWordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%"
-                        + params[0] + "%'", null);
+                        + " WHERE " + WordContract.LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES + " LIKE '%"
+                        + query + "%'", null);
             }
             List<Pair<Word, Boolean>> results = new ArrayList<>();
             if (cursor.moveToFirst()) {
@@ -160,6 +161,7 @@ public class LearnedWordsFragment extends Fragment {
                     w.setTranslations(cursor.getString(cursor.getColumnIndexOrThrow(WordContract.LearnedWordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
                     w.setPronunciation(cursor.getString(cursor.getColumnIndexOrThrow(WordContract.LearnedWordEntry.COLUMN_NAME_PRONUNCIATION)));
                     w.setCategories(cursor.getString(cursor.getColumnIndexOrThrow(WordContract.LearnedWordEntry.COLUMN_NAME_CATEGORIES)).split(";"));
+                    w.setHumanCategories(cursor.getString(cursor.getColumnIndexOrThrow(WordContract.LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES)).split(";"));
                     w.setCorrectAnswers(cursor.getInt(cursor.getColumnIndexOrThrow(WordContract.LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT)));
                     w.setIncorrectAnswers(cursor.getInt(cursor.getColumnIndexOrThrow(WordContract.LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT)));
                     results.add(new Pair<Word, Boolean>(w, null));

@@ -22,6 +22,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:padding="5dp"
-        android:text="Change translation"/>
+        android:text="Změnit překlad"/>
 
 </LinearLayout>

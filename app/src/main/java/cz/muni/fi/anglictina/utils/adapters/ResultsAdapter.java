@@ -34,6 +34,7 @@ import cz.muni.fi.anglictina.db.model.Word;
 import cz.muni.fi.anglictina.fragments.LearnedWordsFragment;
 import cz.muni.fi.anglictina.fragments.LearningFragment;
 import cz.muni.fi.anglictina.fragments.ResultsFragment;
+import cz.muni.fi.anglictina.utils.Categories;
 import cz.muni.fi.anglictina.utils.Results;
 
 /**
@@ -43,10 +44,13 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
 
     private List<Pair<Word, Boolean>> mResults;
     private Context mContext;
+    private SharedPreferences resultsPref;
 
     public ResultsAdapter(Context context, List<Pair<Word, Boolean>> list) {
         mContext = context;
         mResults = list;
+        resultsPref = mContext.getSharedPreferences("results", Context.MODE_PRIVATE);
+
     }
 
     @Override
@@ -135,9 +139,17 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
         }
         StringBuilder sb = new StringBuilder();
         String delim = "";
-        SharedPreferences resultsPref = mContext.getSharedPreferences("results", Context.MODE_PRIVATE); // todo contructor
-        for (String s : mResults.get(groupPosition).first.getCategories()) {
-            sb.append(delim).append(s).append(" <font color=#8BC34A>").append(resultsPref.getInt(s + "_correct", 0))
+        for (String s : mResults.get(groupPosition).first.getHumanCategories()) {
+            String resultCategory = "";
+//            for (String cat : Categories.categoriesForHuman) {
+//                if (Normalizer.normalize(cat, Normalizer.Form.NFD)
+//                        .replaceAll("\\p{InCOMBINING_DIACRITICAL_MARKS}+", "").equals(s)) {
+//                    resultCategory = cat;
+//                    break;
+//                }
+//            }
+            resultCategory = Categories.categoriesForHuman[Categories.categoriesForHumanAscii.indexOf(s)];
+            sb.append(delim).append(resultCategory).append(" <font color=#8BC34A>").append(resultsPref.getInt(s + "_correct", 0))
                     .append("</font> <font color=#F44336>").append(resultsPref.getInt(s + "_incorrect", 0)).append("</font>");
             delim = "<br>";
         }

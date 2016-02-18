@@ -34,7 +34,7 @@ public class Results implements Parcelable {
         in.readList(this.res, List.class.getClassLoader());
     }
 
-    public static final Parcelable.Creator<Results> CREATOR = new Parcelable.Creator<Results>() {
+    public static final Creator<Results> CREATOR = new Creator<Results>() {
         public Results createFromParcel(Parcel source) {
             return new Results(source);
         }

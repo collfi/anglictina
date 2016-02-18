@@ -21,9 +21,18 @@ public class Word implements Parcelable {
     private int correctAnswers;
     private int incorrectAnswers;
     private float diffCoefficient;
+    private String[] humanCategories;
 
     // todo slovny druh
 
+
+    public String[] getHumanCategories() {
+        return humanCategories;
+    }
+
+    public void setHumanCategories(String[] humanCategories) {
+        this.humanCategories = humanCategories;
+    }
 
     public float getDiffCoefficient() {
         return diffCoefficient;
@@ -191,6 +200,7 @@ public class Word implements Parcelable {
         dest.writeInt(this.correctAnswers);
         dest.writeInt(this.incorrectAnswers);
         dest.writeFloat(this.diffCoefficient);
+        dest.writeStringArray(this.humanCategories);
     }
 
     public Word() {
@@ -211,6 +221,7 @@ public class Word implements Parcelable {
         this.correctAnswers = in.readInt();
         this.incorrectAnswers = in.readInt();
         this.diffCoefficient = in.readFloat();
+        this.humanCategories = in.createStringArray();
     }
 
     public static final Creator<Word> CREATOR = new Creator<Word>() {
