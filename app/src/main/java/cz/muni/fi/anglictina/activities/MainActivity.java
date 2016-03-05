@@ -3,24 +3,32 @@ package cz.muni.fi.anglictina.activities;
 import android.app.AlarmManager;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.MenuItem;
@@ -31,8 +39,13 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -49,6 +62,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     public static int sCorrect;
     public static int sIncorrect;
+    private ProgressDialog pd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +82,13 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(OnDbFinishedReceiver, new IntentFilter("INTENT"));
+
         if (!getDatabasePath("words.db").exists()) {
+            pd = new ProgressDialog(this);
+            pd.setMessage("Prosim cekejte...");
+            pd.setCanceledOnTouchOutside(false);
+            pd.show();
             try {
                 WordDbHelper helper = new WordDbHelper(this);
                 SQLiteDatabase db = helper.getWritableDatabase();
@@ -115,6 +135,7 @@ public class MainActivity extends AppCompatActivity
                 db.endTransaction();
                 db.close();
                 reader.close();
+                Log.i("konec", "db");
             } catch (IOException ioe) {
                 Log.e("Main Activity", "error loading db");
             }
@@ -208,10 +229,19 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void deleteDb(View v) {
-        WordDbHelper helper = new WordDbHelper(this);
-        SQLiteDatabase db = helper.getWritableDatabase();
-        db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
-        db.close();
+        try {
+            File f = new File(Environment.DIRECTORY_PICTURES, "words.db");
+            Log.i("asdf", f.exists() + "");
+            copy(getDatabasePath("words.db"), f);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        WordDbHelper helper = new WordDbHelper(this);
+//        SQLiteDatabase db = helper.getWritableDatabase();
+//        db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
+//        db.close();
+
+
 //        new TestTask2().execute();
     }
 
@@ -221,9 +251,16 @@ public class MainActivity extends AppCompatActivity
         protected Void doInBackground(Void... params) {
             try {
                 StringBuilder sb = new StringBuilder();
+                WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                WifiInfo info = manager.getConnectionInfo();
+                String address = info.getMacAddress();
+                TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+
                 sb.append("Device: ").append(Build.MANUFACTURER).append(" ").append(Build.DEVICE)
                         .append(" Android version: ").append(Build.VERSION.RELEASE)
-                .append(" Time: ").append(System.currentTimeMillis());
+                        .append(" ").append(address)
+                        .append(" ").append(telephonyManager.getDeviceId())
+                        .append(" Time: ").append(System.currentTimeMillis());
                 String data = sb.toString();
                 Log.i("post output", data);
                 URL url = new URL("http://collfi.pythonanywhere.com/info");
@@ -371,4 +408,33 @@ public class MainActivity extends AppCompatActivity
         r.getTranslations()[0] = "b";
         Log.i("word", w.equals(r) + "");
     }
+
+    public void copy(File src, File dst) throws IOException {
+        InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst);
+
+        // Transfer bytes from in to out
+        byte[] buf = new byte[1024];
+        int len;
+        while ((len = in.read(buf)) > 0) {
+            out.write(buf, 0, len);
+        }
+        in.close();
+        out.close();
+    }
+
+    @Override
+    protected void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(OnDbFinishedReceiver);
+        super.onDestroy();
+    }
+
+   private BroadcastReceiver OnDbFinishedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (pd.isShowing()) {
+                pd.dismiss();
+            }
+        }
+    };
 }

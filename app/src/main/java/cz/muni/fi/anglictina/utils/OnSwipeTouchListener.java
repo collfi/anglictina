@@ -62,9 +62,9 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
                     if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
                         if (diffX > 0) {
 //                            onSwipeRight();
-                            onSwipeLeft();
+                            onSwipe();
                         } else {
-                            onSwipeLeft();
+                            onSwipe();
                         }
                     }
                     result = true;
@@ -90,7 +90,7 @@ public abstract class OnSwipeTouchListener implements OnTouchListener {
 
     abstract public boolean onViewDown(View v);
 
-    public void onSwipeLeft() {
+    public void onSwipe() {
     }
 
     public void onClick(View v){

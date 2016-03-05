@@ -3,14 +3,15 @@ package cz.muni.fi.anglictina.utils.network;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     private Context mContext;
     private SharedPreferences sp;
     private SQLiteDatabase db;
+
 
 
     @Override
@@ -70,7 +72,6 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     public class GetFromServer extends AsyncTask<Void, Void, Integer> {
 
-
         @Override
         protected Integer doInBackground(Void... params) {
             try {
@@ -100,16 +101,34 @@ public class AlarmReceiver extends BroadcastReceiver {
                 Log.d("get output", responseOutput.toString());
 
                 JSONArray ja = new JSONArray(responseOutput.toString());
+                db.beginTransaction();
+
+                String sql = "UPDATE " + WordContract.WordEntry.TABLE_NAME + " SET "
+                        + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " = ?"
+                        + ", "
+                        + WordContract.WordEntry.COLUMN_NAME_LEARNED_COUNT + " = ?"
+                        + " WHERE " + WordContract.WordEntry.COLUMN_NAME_WORD + " = ?;";
+                SQLiteStatement statement = db.compileStatement(sql);
+
                 for (int i = 0; i < ja.length(); i++) {
                     //todo check if is learned
-                    ContentValues cv = new ContentValues();
-                    cv.put(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY,
-                            ja.getJSONObject(i).getDouble("difficulty"));
-                    cv.put(WordContract.WordEntry.COLUMN_NAME_LEARNED_COUNT,
-                            ja.getJSONObject(i).getInt("learned_count"));//++
-                    db.update(WordContract.WordEntry.TABLE_NAME, cv, WordContract.WordEntry.COLUMN_NAME_WORD + " = ?",
-                            new String[]{ja.getJSONObject(i).getString("english")});
+//                    ContentValues cv = new ContentValues();
+//                        cv.put(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY,
+//                                ja.getJSONObject(i).getDouble("difficulty"));
+//                    cv.put(WordContract.WordEntry.COLUMN_NAME_LEARNED_COUNT,
+//                            ja.getJSONObject(i).getInt("learned_count"));//++
+//                    db.update(WordContract.WordEntry.TABLE_NAME, cv, WordContract.WordEntry.COLUMN_NAME_WORD + " = ?",
+//                            new String[]{ja.getJSONObject(i).getString("english")});
+
+                    statement.clearBindings();
+                    statement.bindDouble(1, ja.getJSONObject(i).getDouble("difficulty"));
+                    statement.bindLong(2, ja.getJSONObject(i).getInt("learned_count"));
+                    statement.bindString(3, ja.getJSONObject(i).getString("english"));
+                    statement.execute();
+
                 }
+                db.setTransactionSuccessful();
+                db.endTransaction();
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.e("settings", "json exception downloading. " + e.getLocalizedMessage());
@@ -125,6 +144,8 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         @Override
         protected void onPostExecute(Integer integer) {
+            Intent intent = new Intent("INTENT");
+            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
             db.close();
             SharedPreferences.Editor ed = sp.edit();
             ed.putInt("last_sync", (int) (System.currentTimeMillis() / 1000));
