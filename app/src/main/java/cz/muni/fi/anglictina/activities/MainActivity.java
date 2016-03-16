@@ -17,7 +17,6 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.DialogFragment;
@@ -50,12 +49,13 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import cz.muni.fi.anglictina.App;
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
 import cz.muni.fi.anglictina.db.WordDbHelper;
 import cz.muni.fi.anglictina.db.model.Word;
 import cz.muni.fi.anglictina.fragments.SettingsFragment;
-import cz.muni.fi.anglictina.utils.network.AlarmReceiver;
+import cz.muni.fi.anglictina.utils.receivers.AlarmReceiver;
 
 
 public class MainActivity extends AppCompatActivity
@@ -72,8 +72,6 @@ public class MainActivity extends AppCompatActivity
 //        test();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.learning_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -82,11 +80,11 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(OnDbFinishedReceiver, new IntentFilter("INTENT"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(onDbFinishedReceiver, new IntentFilter(AlarmReceiver.INTENT_UPDATE));
 
         if (!getDatabasePath("words.db").exists()) {
             pd = new ProgressDialog(this);
-            pd.setMessage("Prosim cekejte...");
+            pd.setMessage("Update databázy. Čekejte prosím...");
             pd.setCanceledOnTouchOutside(false);
             pd.show();
             try {
@@ -209,12 +207,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        Log.i("qqq", "main activity on Resume");
-    }
-
     public void firstTime() {
         SharedPreferences sp = getSharedPreferences("firstTime", Context.MODE_PRIVATE);
         if (sp.getBoolean("run", true)) {
@@ -222,20 +214,20 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(this, AlarmReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, intent, 0);
             AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            manager.setRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
+            manager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
 
             new PostInfo().execute();
         }
     }
 
     public void deleteDb(View v) {
-        try {
-            File f = new File(Environment.DIRECTORY_PICTURES, "words.db");
-            Log.i("asdf", f.exists() + "");
-            copy(getDatabasePath("words.db"), f);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            File f = new File(Environment.DIRECTORY_PICTURES, "words.db");
+//            Log.i("asdf", f.exists() + "");
+//            copy(getDatabasePath("words.db"), f);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 //        WordDbHelper helper = new WordDbHelper(this);
 //        SQLiteDatabase db = helper.getWritableDatabase();
 //        db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
@@ -425,14 +417,26 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(OnDbFinishedReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(onDbFinishedReceiver);
         super.onDestroy();
     }
 
-   private BroadcastReceiver OnDbFinishedReceiver = new BroadcastReceiver() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+        App.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        App.activityPaused();
+    }
+
+   private BroadcastReceiver onDbFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (pd.isShowing()) {
+            if (pd != null && pd.isShowing()) {
                 pd.dismiss();
             }
         }

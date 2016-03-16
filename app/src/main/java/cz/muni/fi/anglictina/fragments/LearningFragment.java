@@ -65,7 +65,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private TextView mPron;
     private SQLiteDatabase mWordsDb;
     private TextToSpeech tts;
-//    private TextView mViewSkill;
+    //    private TextView mViewSkill;
 //    private TextView mChance;
     private ProgressBar progress;
     private SharedPreferences mPreferences;
@@ -74,9 +74,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private Word mCurrentWord;
     private int direction;
     private Handler mHandler;
-    private static View longClicked;
     private int count;
     private List<Pair<Word, Boolean>> results;
+    private int selectedButton;
 
     String[] projection = {WordContract.WordEntry.COLUMN_NAME_ID, WordContract.WordEntry.COLUMN_NAME_WORD,
             WordContract.WordEntry.COLUMN_NAME_TRANSLATIONS, WordContract.WordEntry.COLUMN_NAME_PRONUNCIATION,
@@ -93,6 +93,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
         WordDbHelper helper = new WordDbHelper(getActivity());
         mWordsDb = helper.getWritableDatabase();
+
         mHandler = new Handler();
 
         count = Integer.valueOf(PreferenceManager.getDefaultSharedPreferences(getActivity()).getString("pref_count", "10"));
@@ -206,7 +207,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             @Override
             public void onLongClick(View v) {
                 if (!(v instanceof Button)) return;
-                longClicked = v;
+                if (v.equals(dontKnow)) return;
                 if (direction == 1) {
                     if (Build.VERSION.SDK_INT < 21) {
                         tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
@@ -221,13 +222,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 highlightCorrect();
                 makeButtonsUnclickable();
                 boolean correct;
-                mWords.clear();
                 correct = false;
+                float newWordDiff = 0f;
                 MainActivity.sIncorrect++;
                 if (!repeating) {
 
                     progress.incrementProgressBy(1);
-                    float newWordDiff;
                     float coefficientUser = 1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
                     float coefficientWord = 1 / (1 + 0.05f * (mCurrentWord.getLearnedCount()));
                     float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
@@ -284,6 +284,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                     Log.i("resultscat learn", s + "_incorrect" + " " + resultsPref.getInt(s + "_incorrect", 0) + 1);
                 }
                 ed.commit();
+                if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) {
+                    saveToPost(correct, selectedButton, newWordDiff - mCurrentWord.getDifficulty());
+                }
+
+                mWords.clear();
+
                 new IncorrectDialogFragment().show(getFragmentManager(), "incorrect_dialog");
             }
 
@@ -400,10 +406,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b.setClickable(true);
         c.setClickable(true);
         d.setClickable(true);
+        dontKnow.setClickable(true);
         a.setPressed(false);
         b.setPressed(false);
         c.setPressed(false);
         d.setPressed(false);
+        dontKnow.setPressed(false);
         mCurrentWord = new Word();
 
         if (!checkToRepeat()) {
@@ -414,8 +422,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        getDistractorsSimilarDifficultySimilarCategory();
 //        getDistractorsSimilarDifficultySameCategoryClosestLevenshtein();
 //        getDistractorsSimilarDifficultyClosestLevenshtein();
-//        getDistractorsSimilarDifficultySameCategory();
-        getDistractorsSameCategory();
+        getDistractorsSimilarDifficultySameCategory();
+//        getDistractorsSameCategory();
         mWords.add(mCurrentWord);
         direction = getDirection();
         if (direction == 0) { //direction en-cz
@@ -573,17 +581,18 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     }
     */
     public void answer(View v) {
+
         highlightCorrect();
         makeButtonsUnclickable();
         boolean correct;
-        mWords.clear();
+        float newWordDiff = 0f;
         if (!repeating) {
             progress.incrementProgressBy(1);
             float coefficientUser = 1 / (1 + 0.05f * (MainActivity.sCorrect + MainActivity.sIncorrect));
             float coefficientWord = 1 / (1 + 0.05f * (mCurrentWord.getLearnedCount()));
             float chanceUser = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
             float chanceWord = 1 / (1 + (float) Math.exp(-(mCurrentWord.getDifficulty() - mSkill)));
-            float newWordDiff;
+
 
             if (direction == 0) {
                 if (!((Button) v).getText().equals(mCurrentWord.getTranslations()[0])) {
@@ -678,6 +687,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             }
         }
         ed.apply();
+        if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) {
+            saveToPost(correct, selectedButton, newWordDiff - mCurrentWord.getDifficulty());
+        }
+        mWords.clear();
         if (correct) {
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -697,25 +710,25 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         cv.put(WordEntry.COLUMN_NAME_LEARNED, 1);
         cv.put(WordEntry.COLUMN_NAME_LEARNED_COUNT, mCurrentWord.getLearnedCount() + 1);//++
 
-        if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) { //check
-            cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
-            //todo save string for upload ↑
-            try {
-                SharedPreferences sp = getActivity().getSharedPreferences("post", Context.MODE_PRIVATE);
-                JSONArray ja = new JSONArray(sp.getString("post", "[]"));
-                JSONObject upload = new JSONObject();
-                upload.put("english", mCurrentWord.getWord());
-                upload.put("difficulty", newWordDiff - mCurrentWord.getDifficulty());
-                ja.put(upload);
-                Log.i("learning", ja.toString());
-                SharedPreferences.Editor ed = sp.edit();
-                ed.putString("post", ja.toString());
-                ed.apply();
-            } catch (JSONException e) {
-                Log.e("learning", "json exception saving string to post. " + e.getLocalizedMessage());
-                e.printStackTrace();
-            }
-        }
+
+        cv.put(WordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff);//++
+        //todo save string for upload ↑
+//            try {
+//                SharedPreferences sp = getActivity().getSharedPreferences("post", Context.MODE_PRIVATE);
+//                JSONArray ja = new JSONArray(sp.getString("post", "[]"));
+//                JSONObject upload = new JSONObject();
+//                upload.put("english", mCurrentWord.getWord());
+//                upload.put("difficulty", newWordDiff - mCurrentWord.getDifficulty());
+//                ja.put(upload);
+//                Log.i("learning", ja.toString());
+//                SharedPreferences.Editor ed = sp.edit();
+//                ed.putString("post", ja.toString());
+//                ed.apply();
+//            } catch (JSONException e) {
+//                Log.e("learning", "json exception saving string to post. " + e.getLocalizedMessage());
+//                e.printStackTrace();
+//            }
+
         mWordsDb.update(WordEntry.TABLE_NAME, cv, WordEntry.COLUMN_NAME_WORD + " = ?", new String[]{mCurrentWord.getWord()});
 
 //            mPreferences.edit().putString(mWord.getText().toString(), mWord.getText().toString()).apply();
@@ -742,6 +755,11 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         mWordsDb.insert(LearnedWordEntry.TABLE_NAME, null, cv);
     }
 
+    /**
+     * Updates word when it is repeated.
+     *
+     * @param correct Whether answer was correct or not
+     */
     public void updateDbRepeating(boolean correct) {
         ContentValues cv = new ContentValues();
         long ttr = computeRepeatTime(correct);
@@ -820,10 +838,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         repeating = false;
         Cursor currentCursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME + " WHERE " +
                 WordEntry.COLUMN_NAME_LEARNED + " = 0 ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY +
-                " - " + mSkill + ") LIMIT 10", null);
+                " - " + mSkill + ") LIMIT 20", null);
         Random r = new Random(System.nanoTime());
 
-        if (currentCursor.moveToPosition(r.nextInt(10))) {
+        if (currentCursor.moveToPosition(r.nextInt(20))) {
             mCurrentWord.setWord(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_WORD)));
             mCurrentWord.setTranslations(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_TRANSLATIONS)).split(";"));
             mCurrentWord.setPronunciation(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_PRONUNCIATION)));
@@ -832,7 +850,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setHumanCategories(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_HUMAN_CATEGORIES)).split(";"));
             mCurrentWord.setLearnedCount(currentCursor.getInt(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_LEARNED_COUNT)));
         }
-//        Log.i("zzzzzz", "get new word: " + arrayToString(currentCursor.getString(currentCursor.getColumnIndexOrThrow(WordEntry.COLUMN_NAME_CATEGORIES)).split(";")));
         currentCursor.close();
     }
 
@@ -873,6 +890,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         b.setClickable(false);
         c.setClickable(false);
         d.setClickable(false);
+        dontKnow.setClickable(false);
     }
 
     /**
@@ -912,22 +930,10 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     }
 
     public void getDistractorsSimilarDifficultySimilarCategory() {
-        float magic = 0.1f;
-        Cursor cursor;
-
-//            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-//                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
-//                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
-//                    + " AND " + (mSkill + magic)
-//                    + " ORDER BY RANDOM() LIMIT 100", null);
-        cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+        Cursor cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
                 + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
                 + "%'"
                 + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
-        magic += 0.1;
-        Log.i("dist cur count: ", cursor.getCount() + "");
-
-
         fromCursorToWords(cursor);
         cursor.close();
         Collections.shuffle(mWords);
@@ -938,11 +944,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         float magic = 0.1f;
         Cursor cursor;
         do {
-//            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-//                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
-//                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
-//                    + " AND " + (mSkill + magic)
-//                    + " ORDER BY RANDOM() LIMIT 100", null);
             cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
                     + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
                     + "%'"
@@ -966,11 +967,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         float magic = 0.1f;
         Cursor cursor;
         do {
-//            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-//                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()
-//                    + "%' AND " + WordEntry.COLUMN_NAME_DIFFICULTY + " BETWEEN " + (mSkill - magic)
-//                    + " AND " + (mSkill + magic)
-//                    + " ORDER BY RANDOM() LIMIT 100", null);
             cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
                     + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
             magic += 0.1;
@@ -979,7 +975,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
         fromCursorToWords(cursor);
         cursor.close();
-//            Collections.shuffle(mWords);
+
         Collections.sort(mWords, new WordLevenshteinComparator());
         mWords = mWords.subList(0, 3);
         Log.i("levenshtein", mWords.get(0).getLevenshteinToCurrent() + " - " + mWords.get(0).getWord() + "\n" +
@@ -1089,44 +1085,32 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
-//            a.setTextColor(getResources().getColor(R.color.greenCorrect));
-//            b.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            c.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+            selectedButton = 1;
         } else if (b.getText().toString().equals(answer)) {
             b.setBackground(getResources().getDrawable(R.drawable.button_correct));
             a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
-//            b.setTextColor(getResources().getColor(R.color.greenCorrect));
-//            a.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            c.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+            selectedButton = 2;
         } else if (c.getText().toString().equals(answer)) {
             c.setBackground(getResources().getDrawable(R.drawable.button_correct));
             b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
-//            c.setTextColor(getResources().getColor(R.color.greenCorrect));
-//            b.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            a.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            d.setTextColor(getResources().getColor(R.color.redIncorrect));
+            selectedButton = 3;
         } else if (d.getText().toString().equals(answer)) {
             d.setBackground(getResources().getDrawable(R.drawable.button_correct));
             b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
-//            a.setTextColor(getResources().getColor(R.color.greenCorrect));
-//            b.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            c.setTextColor(getResources().getColor(R.color.redIncorrect));
-//            a.setTextColor(getResources().getColor(R.color.redIncorrect));
+            selectedButton = 4;
         }
 
     }
 
     public static class IncorrectDialogFragment extends DialogFragment {
 
-        LearningFragment mFragment;
+        private LearningFragment mFragment;
 
         @Override
         public void onDismiss(DialogInterface dialog) {
@@ -1243,5 +1227,28 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         getFragmentManager().popBackStack();
         Fragment f = ResultsFragment.newInstance(r);
         getFragmentManager().beginTransaction().add(R.id.learning_layout, f, "results").commit();
+    }
+
+    public void saveToPost(boolean correct, int selected, float diffChange) {
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("current", mCurrentWord.getWord());
+            jo.put("correct", correct);
+            jo.put("distractors", mWords.get(0).getWord() + ";" + mWords.get(1).getWord() + ";"
+                    + mWords.get(2).getWord() + ";" + mWords.get(3).getWord());
+            jo.put("selected", selected);
+            jo.put("time", getTimeSeconds());
+            jo.put("skill", mSkill);
+            jo.put("diff_change", diffChange);
+            SharedPreferences postPref = getActivity().getSharedPreferences("post", Context.MODE_PRIVATE);
+            JSONArray resultsArray = new JSONArray(postPref.getString("results", "[]"));
+            resultsArray.put(jo);
+            postPref.edit().putString("results", resultsArray.toString()).commit();
+
+            selectedButton = 0;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.e("learningFragment", "json exception while save to post");
+        }
     }
 }

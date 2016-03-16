@@ -114,7 +114,7 @@
         android:layout_alignParentRight="true"
         android:layout_marginBottom="15dp"
         android:layout_marginRight="15dp"
-        android:text="Napoveda"
+        android:text="Nápověda"
         android:textAllCaps="false"
         android:textSize="18sp"/>
 
@@ -127,7 +127,7 @@
         android:layout_alignParentLeft="true"
         android:layout_marginBottom="15dp"
         android:layout_marginLeft="15dp"
-        android:text="Nastaveni"
+        android:text="Nastavení"
         android:textAllCaps="false"
         android:textSize="18sp"/>
 

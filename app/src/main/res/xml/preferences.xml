@@ -3,17 +3,22 @@
                   xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
         android:key="pref_general"
-        android:title="Obecne">
+        android:title="Obecné">
         <EditTextPreference
             android:defaultValue="10"
             android:key="pref_count"
             app:dialogLayout="@layout/edittextpreference_dialog"
-            app:title="Pocet slovicek"
+            app:title="Počet slovíček"
             android:imeOptions="actionDone"/>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_notifications"
+            android:title="Notifikace"
+            android:icon="@drawable/ic_notifications_black_24dp"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="pref_general"
-        android:title="Obecne">
+        android:title="Informace">
         <Preference
             android:icon="@drawable/ic_feedback_black_24dp"
             android:key="pref_feedback"

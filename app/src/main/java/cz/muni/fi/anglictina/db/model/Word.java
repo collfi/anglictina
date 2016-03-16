@@ -23,9 +23,6 @@ public class Word implements Parcelable {
     private float diffCoefficient;
     private String[] humanCategories;
 
-    // todo slovny druh
-
-
     public String[] getHumanCategories() {
         return humanCategories;
     }

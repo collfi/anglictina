@@ -1,6 +1,9 @@
 package cz.muni.fi.anglictina.fragments;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -8,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -19,7 +23,18 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,6 +70,7 @@ public class ResultsFragment extends Fragment {
             results = new ArrayList<>(((Results) getArguments().getParcelable("results")).res);
         }
         getActivity().setTitle("Results");
+        new PostToServer(getActivity()).execute();
     }
 
     @Nullable
@@ -189,5 +205,112 @@ public class ResultsFragment extends Fragment {
             }
             return result;
         }
+    }
+
+    public class PostToServer extends AsyncTask<Void, Void, Integer> {
+        private Context mContext;
+        public PostToServer(Context c) {
+            mContext = c;
+        }
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            try { //todo getactivity, radsej context
+                SharedPreferences pref = mContext.getSharedPreferences("post", Context.MODE_PRIVATE);
+                JSONArray resultsArray = new JSONArray(pref.getString("results", "[]"));
+                if (resultsArray.length() == 0) {
+                    return 1;
+                }
+                JSONObject data = new JSONObject();
+                WifiManager manager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+                WifiInfo info = manager.getConnectionInfo();
+                String address = info.getMacAddress();
+                data.put("results", resultsArray);
+                data.put("user", address);
+                Log.i("post output", data.toString());
+                URL url = new URL("http://collfi.pythonanywhere.com/post_all");
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+
+                connection.setDoOutput(true);
+                DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
+                dStream.writeBytes(data.toString());
+                dStream.flush();
+                dStream.close();
+                int responseCode = connection.getResponseCode();
+                Log.d("POST", "MSG " + connection.getResponseMessage());
+                Log.d("POST RES", "" + responseCode);
+                if (responseCode != 200) {
+                    return responseCode;
+                }
+//                final StringBuilder output = new StringBuilder("Request URL " + url);
+//                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
+//                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//                String line = "";
+//                StringBuilder responseOutput = new StringBuilder();
+//                while ((line = br.readLine()) != null) {
+//                    responseOutput.append(line);
+//                }
+//                br.close();
+//
+//                Log.d("output", responseOutput.toString());
+//
+//                output.append(System.getProperty("line.separator") + "Response " + System.getProperty("line.separator") + System.getProperty("line.separator") + responseOutput.toString());
+
+
+            } catch (UnknownHostException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+                return -1;
+            } catch (MalformedURLException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+                return -1;
+            } catch (IOException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+                return -1;
+            } catch (JSONException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+                return -1;
+            }
+            return 0;
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            switch (integer) {
+                case 0:
+                    SharedPreferences sp = mContext.getSharedPreferences("post", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor ed = sp.edit();
+                    ed.remove("results");
+                    ed.apply();
+                    Toast.makeText(mContext, "Poslání dát na server bylo úspěšné.", Toast.LENGTH_SHORT).show();
+                    break;
+                case -1:
+                    Toast.makeText(mContext, "Chyba při posílaní dat na server.", Toast.LENGTH_SHORT).show();
+                    break;
+                case 1:
+                    break;
+            }
+            mContext = null;
+
+        }
+    }
+
+    @Override
+    public void onPause() {
+        Log.i("asdf", "pause");
+        results = null;
+//        getFragmentManager().popBackStack(R.id.main_fragment, 0);
+//        getFragmentManager().executePendingTransactions();
+//        getFragmentManager().beginTransaction().remove(getFragmentManager().findFragmentById(R.id.learning_fragment)).commit();
+//
+//        getFragmentManager().beginTransaction().remove(this).commit();
+        getActivity().finish();
+        super.onPause();
     }
 }

@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.support.v7.app.AppCompatActivity;
 
+import cz.muni.fi.anglictina.App;
 import cz.muni.fi.anglictina.R;
 
 /**
@@ -25,5 +26,17 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_settings);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        App.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        App.activityPaused();
     }
 }

@@ -11,7 +11,7 @@
         android:completionThreshold="1"
         android:layout_gravity="top"
         android:imeOptions="actionDone"
-        android:hint="Filter by categories"
+        android:hint="Filtrujte podle kategorií"
         android:drawableRight="@drawable/ic_clear_black_18dp"
         android:id="@+id/filter"/>
 

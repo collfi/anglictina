@@ -11,7 +11,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:padding="5dp"
-        android:text="Správne"/>
+        android:text="Správně"/>
 
     <TextView
         android:id="@+id/correct"
@@ -28,7 +28,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
         android:padding="5dp"
-        android:text="Nesprávne"/>
+        android:text="Nesprávně"/>
 
     <TextView
         android:id="@+id/incorrect"

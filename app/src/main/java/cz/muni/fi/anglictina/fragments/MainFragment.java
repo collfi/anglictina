@@ -70,11 +70,6 @@ public class MainFragment extends Fragment {
                 Toast.makeText(getActivity(), "Zatím nic.", Toast.LENGTH_SHORT).show();
             }
         });
-//        mSkill = (TextView) view.findViewById(R.id.skill);
-//        mSkillProgress = (CircularProgressView) view.findViewById(R.id.skill_progress);
-//        mSkillProgress.setProgress(0);
-
-//        mSkillProgress.getProgressDrawable().setColorFilter(new PorterDuffColorFilter(Color.RED, PorterDuff.Mode.MULTIPLY));
         return view;
     }
 

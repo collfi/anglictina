@@ -1,4 +1,4 @@
-package cz.muni.fi.anglictina.utils.network;
+package cz.muni.fi.anglictina.utils.receivers;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -16,7 +16,7 @@ public class BootReceiver extends BroadcastReceiver {
             Intent i = new Intent(context, AlarmReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
             AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            manager.setRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
+            manager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME, 5000, AlarmManager.INTERVAL_DAY, pendingIntent);
         }
     }
 }

@@ -22,6 +22,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -89,7 +90,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         if (pref instanceof EditTextPreference) {
             EditTextPreference etp = (EditTextPreference) pref;
             if (etp.getText().equals("") || Integer.valueOf(etp.getText()) == 0) {
-                Toast.makeText(getActivity(), "Pocet musi byt vecsi ako 1.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Počet musí být věčší ako 1.", Toast.LENGTH_SHORT).show();
                 etp.setSummary("1");
                 etp.setText("1");
                 etp.callChangeListener("1");
@@ -97,6 +98,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             }
             pref.setSummary(etp.getText());
         }
+        //todo timepicker dialog, change notification time(also download)
     }
 
     @Override
@@ -144,21 +146,21 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             View view = getActivity().getLayoutInflater().inflate(R.layout.dialog_feedback, null);
             message = (EditText) view.findViewById(R.id.message);
             builder.setView(view);
-            builder.setMessage("Please write your feedback, it's very important.");
-            builder.setPositiveButton("Send", new DialogInterface.OnClickListener() {
+            builder.setMessage("Prosím, podělte se o svou spětnou vazbu. Je to důležité.");
+            builder.setPositiveButton("Odeslat", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     if (isConnected()) {
-                        new SendFeedback().execute(message.getText().toString());
+                        new SendFeedback2(getActivity()).execute(message.getText().toString());
                     } else {
-                        Toast.makeText(getActivity(), "You are not connected to the Internet.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Nejste připojen k Internetu.", Toast.LENGTH_SHORT).show();
                     }
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(message.getWindowToken(), 0);
                     dismiss();
                 }
             });
-            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            builder.setNegativeButton("Zrušit", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -214,11 +216,63 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             protected void onPostExecute(Integer integer) {
                 if (integer == 200) {
                     Log.i("feedback", "OK");
-//                    Toast.makeText(getActivity(), "Successfully sent.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Úspěšne odesláno.", Toast.LENGTH_SHORT).show();
                 } else {
                     Log.i("feedback", "Fail");
-//                    Toast.makeText(getActivity(), "Error while sending.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Chyba při odesílání.", Toast.LENGTH_SHORT).show();
                 }
+            }
+        }
+
+        public class SendFeedback2 extends AsyncTask<String, Void, Integer> {
+            private Context mContext;
+
+            public SendFeedback2(Context context) {
+                mContext = context;
+            }
+
+            @Override
+            protected Integer doInBackground(String... params) {
+                try {
+
+                    URL url = new URL("http://collfi.pythonanywhere.com/feedback2");
+
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "text/plain");
+                    connection.setDoOutput(true);
+                    DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
+                    dStream.writeBytes(params[0]);
+                    dStream.flush();
+                    dStream.close();
+                    int responseCode = connection.getResponseCode();
+                    Log.d("POST", "MSG " + connection.getResponseMessage());
+                    Log.d("POST RES", "" + responseCode);
+                    if (responseCode != 200) {
+                        return -1;
+                    } else {
+                        return responseCode;
+                    }
+                } catch (MalformedURLException e) {
+                    Log.e("settings", e.getLocalizedMessage());
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    Log.e("settings", e.getLocalizedMessage());
+                    e.printStackTrace();
+                }
+                return -1;
+            }
+
+            @Override
+            protected void onPostExecute(Integer integer) {
+                if (integer == 200) {
+                    Log.i("feedback", "OK");
+                    Toast.makeText(mContext, "Úspěšne odesláno.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.i("feedback", "Fail");
+                    Toast.makeText(mContext, "Chyba při odesílání.", Toast.LENGTH_SHORT).show();
+                }
+                mContext = null;
             }
         }
     }

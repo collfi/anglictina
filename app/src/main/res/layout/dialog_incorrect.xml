@@ -12,7 +12,7 @@
         android:id="@+id/tap_to_continue"
         android:gravity="center_horizontal"
         android:background="@android:color/transparent"
-        android:text="Tap to continue"
+        android:text="Klepněte pro pokračování"
         android:textSize="30sp"
         android:paddingBottom="100dp"/>
 
