@@ -60,7 +60,7 @@
         android:layout_below="@+id/skill_text"
         android:minWidth="230dp"
         android:padding="10dp"
-        android:text="Počet správnych odpovědí"
+        android:text="Počet správných odpovědí"
         android:textColor="#000000"
         android:textSize="15sp"/>
 
@@ -71,7 +71,7 @@
         android:layout_below="@+id/correct_text"
         android:minWidth="230dp"
         android:padding="10dp"
-        android:text="Počet nesprávnych odpovědí"
+        android:text="Počet nesprávných odpovědí"
         android:textColor="#000000"
         android:textSize="15sp"/>
 

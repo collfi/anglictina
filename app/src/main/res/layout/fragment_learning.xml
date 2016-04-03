@@ -68,14 +68,20 @@
         <!--android:gravity="center"-->
         <!--android:text="@string/tip_warning"/>-->
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_above="@+id/button_dont_know"
+        android:id="@+id/buttons_cd"
+        android:orientation="horizontal">
     <Button
         android:id="@+id/button_d"
         style="@style/Widget.AppCompat.Button"
-        android:layout_width="160dp"
+        android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:layout_above="@+id/button_dont_know"
-        android:layout_alignParentRight="true"
-        android:layout_marginRight="15dp"
+        android:layout_weight="1"
+        android:layout_marginRight="7.5dp"
+        android:layout_marginLeft="15dp"
         android:background="@drawable/button"
         android:ellipsize="marquee"
         android:maxLines="2"
@@ -86,24 +92,30 @@
     <Button
         android:id="@+id/button_c"
         style="@style/Widget.AppCompat.Button"
-        android:layout_width="160dp"
+        android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:layout_above="@+id/button_dont_know"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="15dp"
+        android:layout_marginLeft="7.5dp"
+        android:layout_weight="1"
+        android:layout_marginRight="15dp"
         android:background="@drawable/button"
         android:textAllCaps="false"
         android:textColor="@android:color/black"
         android:textSize="18sp"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:orientation="horizontal"
+        android:layout_above="@id/buttons_cd"
+        android:layout_marginBottom="15dp">
 
     <Button
         android:id="@+id/button_a"
         style="@style/Widget.AppCompat.Button"
-        android:layout_width="160dp"
+        android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:layout_above="@id/button_c"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="15dp"
+        android:layout_weight="1"
+        android:layout_marginRight="7.5dp"
         android:layout_marginLeft="15dp"
         android:background="@drawable/button"
         android:textAllCaps="false"
@@ -113,17 +125,16 @@
     <Button
         android:id="@+id/button_b"
         style="@style/Widget.AppCompat.Button"
-        android:layout_width="160dp"
+        android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:layout_above="@id/button_d"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="15dp"
+        android:layout_weight="1"
         android:layout_marginRight="15dp"
+        android:layout_marginLeft="7.5dp"
         android:background="@drawable/button"
         android:textAllCaps="false"
         android:textColor="@android:color/black"
         android:textSize="18sp"/>
-    
+    </LinearLayout>
     <Button
         android:layout_width="match_parent"
         android:layout_height="54dp"

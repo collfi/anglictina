@@ -69,7 +69,7 @@ public class ResultsFragment extends Fragment {
         if (getArguments() != null) {
             results = new ArrayList<>(((Results) getArguments().getParcelable("results")).res);
         }
-        getActivity().setTitle("Results");
+        getActivity().setTitle("Výsledky");
         new PostToServer(getActivity()).execute();
     }
 

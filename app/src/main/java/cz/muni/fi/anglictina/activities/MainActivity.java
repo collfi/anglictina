@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity
             pd = new ProgressDialog(this);
             pd.setMessage("Update databázy. Čekejte prosím...");
             pd.setCanceledOnTouchOutside(false);
+            pd.setCancelable(false);
             pd.show();
             try {
                 WordDbHelper helper = new WordDbHelper(this);
@@ -246,7 +247,7 @@ public class MainActivity extends AppCompatActivity
                 WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
                 WifiInfo info = manager.getConnectionInfo();
                 String address = info.getMacAddress();
-                TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+                TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
                 sb.append("Device: ").append(Build.MANUFACTURER).append(" ").append(Build.DEVICE)
                         .append(" Android version: ").append(Build.VERSION.RELEASE)
@@ -433,7 +434,7 @@ public class MainActivity extends AppCompatActivity
         App.activityPaused();
     }
 
-   private BroadcastReceiver onDbFinishedReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver onDbFinishedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (pd != null && pd.isShowing()) {

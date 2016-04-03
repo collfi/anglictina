@@ -4,7 +4,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -29,7 +28,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import cz.muni.fi.anglictina.R;
-import cz.muni.fi.anglictina.db.WordDbHelper;
 
 /**
  * Created by collfi on 27. 10. 2015.
@@ -38,13 +36,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     private SharedPreferences sp;
-    private SQLiteDatabase db;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         sp = getPreferenceScreen().getSharedPreferences();
-        db = new WordDbHelper(getActivity()).getWritableDatabase();
         EditTextPreference count = (EditTextPreference) findPreference("pref_count");
         count.setSummary(sp.getString("pref_count", "10"));
         count.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -111,7 +107,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
     @Override
     public void onPause() {
         super.onPause();
-        db.close();
         getPreferenceScreen().getSharedPreferences()
                 .unregisterOnSharedPreferenceChangeListener(this);
     }

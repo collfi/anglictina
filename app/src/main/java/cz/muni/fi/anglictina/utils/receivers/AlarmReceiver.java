@@ -43,6 +43,7 @@ import cz.muni.fi.anglictina.db.WordDbHelper;
 public class AlarmReceiver extends BroadcastReceiver {
     public static final long HALF_DAY_MILIS = 43200000;
     public static final long SIX_HOURS_MILIS = 21600000;
+    public static final long INTERVAL = 21600000;
     public static final String INTENT_UPDATE = "intentUpdate";
     private Context mContext;
     private SharedPreferences sp;
@@ -59,10 +60,12 @@ public class AlarmReceiver extends BroadcastReceiver {
             Intent i = new Intent(context, AlarmReceiver.class);
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, i, 0);
             AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            manager.set(AlarmManager.RTC, System.currentTimeMillis() + HALF_DAY_MILIS, pendingIntent);
+            manager.set(AlarmManager.RTC, System.currentTimeMillis() + INTERVAL, pendingIntent);
             Intent intent2 = new Intent(INTENT_UPDATE);
             LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent2);
-            Toast.makeText(context, "Nejste připojen k Internetu.", Toast.LENGTH_SHORT).show();
+            if (App.isActivityVisible()) {
+                Toast.makeText(context, "Nejste připojen k Internetu.", Toast.LENGTH_SHORT).show();
+            }
         }
         if (!App.isActivityVisible()) {
             checkRepeating();
@@ -76,7 +79,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 + " ORDER BY " + WordContract.LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " ASC LIMIT 1", null);
         if (cur.moveToFirst()) {
             if (PreferenceManager.getDefaultSharedPreferences(mContext)
-                    .getBoolean("pref_notifications", false)) {
+                    .getBoolean("pref_notifications", true)) {
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext)
                         .setSmallIcon(R.drawable.ic_translate_white_36dp)
                         .setContentTitle("Máte slova na opakovaní.")
@@ -85,6 +88,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                         .setAutoCancel(true);
                 Intent resultIntent = new Intent(mContext, LearnActivity.class);
+                resultIntent.putExtra("notification", true);
                 TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
                 stackBuilder.addParentStack(LearnActivity.class);
                 stackBuilder.addNextIntent(resultIntent);
