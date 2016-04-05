@@ -11,6 +11,7 @@
         android:id="@+id/progress"
         android:layout_width="match_parent"
         android:layout_height="5dp"
+        android:progressDrawable="@drawable/progress"
         style="@android:style/Widget.ProgressBar.Horizontal"/>
     <!--<android.support.design.widget.AppBarLayout-->
     <!--android:layout_height="wrap_content"-->

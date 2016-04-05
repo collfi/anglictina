@@ -13,7 +13,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -153,7 +152,7 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
                     .append("</font> <font color=#F44336>").append(resultsPref.getInt(s + "_incorrect", 0)).append("</font>");
             delim = "<br>";
         }
-        holder.categories.setText(Html.fromHtml(sb.toString()));
+//        holder.categories.setText(Html.fromHtml(sb.toString()));
         holder.change.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

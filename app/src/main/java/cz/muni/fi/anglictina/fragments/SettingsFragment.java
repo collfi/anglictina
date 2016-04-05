@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.preference.CheckBoxPreference;
 import android.support.v7.preference.EditTextPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceCategory;
@@ -93,6 +94,21 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 return;
             }
             pref.setSummary(etp.getText());
+        } else if (pref instanceof CheckBoxPreference) {
+            CheckBoxPreference cbp = (CheckBoxPreference) pref;
+            if (key.equals("pref_sounds") && !cbp.isChecked()) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Přehrávaní slov");
+                builder.setMessage("Automatické přehrávání vypnuto. Přehrávání je stále dostpuné při " +
+                        "dlouhém podržení na anglické slovo.");
+                builder.setNeutralButton("Zrušit", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                builder.create().show();
+            }
         }
         //todo timepicker dialog, change notification time(also download)
     }

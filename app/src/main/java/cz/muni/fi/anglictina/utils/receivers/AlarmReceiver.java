@@ -41,9 +41,9 @@ import cz.muni.fi.anglictina.db.WordDbHelper;
  * Created by collfi on 7. 2. 2016.
  */
 public class AlarmReceiver extends BroadcastReceiver {
-    public static final long HALF_DAY_MILIS = 43200000;
-    public static final long SIX_HOURS_MILIS = 21600000;
-    public static final long INTERVAL = 21600000;
+    public static final long HALF_DAY_MILIS = 43200000; //12 hours
+    public static final long SIX_HOURS_MILIS = 21600000; //6 hours
+    public static final long INTERVAL = 21600000; //6 hours
     public static final String INTENT_UPDATE = "intentUpdate";
     private Context mContext;
     private SharedPreferences sp;

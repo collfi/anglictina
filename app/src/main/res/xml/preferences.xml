@@ -15,6 +15,11 @@
             android:key="pref_notifications"
             android:title="Notifikace"
             android:icon="@drawable/ic_notifications_black_24dp"/>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_sounds"
+            android:title="Zvuky"
+            android:icon="@drawable/ic_hearing_black_24dp"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:key="pref_general"
@@ -26,7 +31,7 @@
         <Preference
             android:icon="@drawable/ic_info_black_24dp"
             android:key="pref_about"
-            android:title="O aplikacii"/>
+            android:title="O aplikaci"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

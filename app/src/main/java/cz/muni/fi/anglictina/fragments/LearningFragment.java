@@ -58,7 +58,9 @@ import cz.muni.fi.anglictina.utils.WordLevenshteinComparator;
  * Created by collfi on 27. 10. 2015.
  */
 public class LearningFragment extends Fragment implements TextToSpeech.OnInitListener {
-    public static final long INTERVAL = 43200;//60 * 60 * 24;
+    //    public static final long INTERVAL = 43200;//12 hours
+    public static final long INTERVAL = 86400;//24 hours
+//        public static final long INTERVAL = 10;//10 sec
     public static final float DEFAULT_WORD_COEFFICIENT = 2.5f;
     private float mSkill;
     private Button a;
@@ -88,6 +90,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     private List<IncorrectQuestion> incorrectList;
     private boolean repeatingIncorrect;
     private boolean fromNotification;
+    private int reviseCount;
 
     String[] projection = {WordContract.WordEntry.COLUMN_NAME_ID, WordContract.WordEntry.COLUMN_NAME_WORD,
             WordContract.WordEntry.COLUMN_NAME_TRANSLATIONS, WordContract.WordEntry.COLUMN_NAME_PRONUNCIATION,
@@ -168,11 +171,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             @Override
             public boolean onLongClick(View v) {
                 if (direction == 0) {
-                    if (Build.VERSION.SDK_INT < 21) {
-                        tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-                    } else {
-                        tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
-                    }
+                    readWord(v);
                 }
                 return true;
             }
@@ -218,11 +217,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 if (!(v instanceof Button)) return;
                 if (v.equals(dontKnow)) return;
                 if (direction == 1) {
-                    if (Build.VERSION.SDK_INT < 21) {
-                        tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-                    } else {
-                        tts.speak(((Button) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
-                    }
+                    readWord(v);
                 }
             }
 
@@ -301,7 +296,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 }
                 ed.commit();
                 if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) {
-                    saveToPost(correct, selectedButton, newWordDiff - mCurrentWord.getDifficulty());
+                    saveToPost(correct, selectedButton, repeating ? 0 : newWordDiff - mCurrentWord.getDifficulty());
                 }
 
                 mWords.clear();
@@ -458,6 +453,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             b.setText(mWords.get(1).getWord());
             c.setText(mWords.get(2).getWord());
             d.setText(mWords.get(3).getWord());
+        }
+        if (direction == 0) {
+            if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .getBoolean("pref_sounds", true)) {
+                readWord(mWord);
+            }
         }
 
 //        mViewSkill.setText(String.format("%.5f", mSkill));
@@ -737,9 +738,15 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 ed.putInt(s + "_incorrect", resultsPref.getInt(s + "_incorrect", 0) + 1);
             }
         }
+        if (direction == 1) {
+            if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .getBoolean("pref_sounds", true)) {
+                readWord(v);
+            }
+        }
         ed.apply();
         if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) {
-            saveToPost(correct, selectedButton, newWordDiff - mCurrentWord.getDifficulty());
+            saveToPost(correct, selectedButton, repeating ? 0 : newWordDiff - mCurrentWord.getDifficulty());
         }
         mWords.clear();
         if (correct) {
@@ -805,6 +812,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             cv.put(LearnedWordEntry.COLUMN_NAME_TRANSLATIONS, arrayToString(mCurrentWord.getTranslations()));
             cv.put(LearnedWordEntry.COLUMN_NAME_CATEGORIES, arrayToString(mCurrentWord.getCategories()));
             cv.put(LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES, arrayToString(mCurrentWord.getHumanCategories()));
+            cv.put(LearnedWordEntry.COLUMN_NAME_DIFFICULTY, newWordDiff); //todo added diff to learned words
             if (correct) {
                 mCurrentWord.incrementCorrect();
                 cv.put(LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT, mCurrentWord.getCorrectAnswers());
@@ -886,9 +894,18 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
      * @return true if there is word that should be reviewed, false otherwise
      */
     public boolean checkToRepeat() {
+        if (reviseCount == count) {
+            repeating = false;
+            return false;
+        }
+        reviseCount++;
+//        Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
+//                LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
+//                + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " ASC LIMIT 1", null);
+        // order by diff
         Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
                 LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
-                + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " ASC LIMIT 1", null);
+                + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null); //todo
         if (cur.moveToFirst()) {
             repeating = true;
 //            wordToRepeat = new Word();
@@ -905,6 +922,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             progress.setMax(progress.getMax() + 100);
             return true;
         } else {
+            repeating = false;
             cur.close();
             return false;
         }
@@ -940,6 +958,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
      */
     @Override
     public void onInit(int status) {
+        Log.i("zxcv", "on init");
         if (status != TextToSpeech.ERROR) {
             tts.setLanguage(Locale.ENGLISH);
         }
@@ -1490,5 +1509,15 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             }
             new ClickToContinueDialog().show(getFragmentManager(), "incorrect_dialog");
         }
+    }
+
+    public void readWord(View v) {
+        if (Build.VERSION.SDK_INT < 21) {
+            tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
+        } else {
+            tts.speak(((TextView) v).getText().toString(), TextToSpeech.QUEUE_FLUSH, null, "test");
+        }
+
+
     }
 }

@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
 import android.net.wifi.WifiInfo;
@@ -229,10 +230,22 @@ public class MainActivity extends AppCompatActivity
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-//        WordDbHelper helper = new WordDbHelper(this);
-//        SQLiteDatabase db = helper.getWritableDatabase();
-//        db.delete(WordContract.LearnedWordEntry.TABLE_NAME, null, null);
-//        db.close();
+        WordDbHelper helper = new WordDbHelper(this);
+        SQLiteDatabase db = helper.getWritableDatabase();
+        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME + " ORDER BY " +
+                WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " ASC", null);
+
+        c.moveToFirst();
+        Log.i("zxcv", c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)) + "");
+        Log.i("zxcv", 1 / (1 + (float) Math.exp(-(2.44 - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY))))) + "");
+
+        c.moveToLast();
+        Log.i("zxcv", c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)) + "");
+
+        Log.i("zxcv", 1 / (1 + (float) Math.exp(-(2.44 - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY))))) + "");
+        Log.i("zxcv", 1 / (1 + (float) Math.exp(-(2.44 - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY))))) + "");
+        c.close();
+        db.close();
 
 
 //        new TestTask2().execute();

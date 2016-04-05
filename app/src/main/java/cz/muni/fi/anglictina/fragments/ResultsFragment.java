@@ -1,6 +1,7 @@
 package cz.muni.fi.anglictina.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -14,6 +15,9 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,14 +41,17 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import cz.muni.fi.anglictina.R;
+import cz.muni.fi.anglictina.activities.LearnActivity;
 import cz.muni.fi.anglictina.db.model.Word;
 import cz.muni.fi.anglictina.utils.Categories;
 import cz.muni.fi.anglictina.utils.Results;
+import cz.muni.fi.anglictina.utils.ResultsComparator;
 import cz.muni.fi.anglictina.utils.adapters.ResultsAdapter;
 
 /**
@@ -66,11 +73,31 @@ public class ResultsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+
+//        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         if (getArguments() != null) {
             results = new ArrayList<>(((Results) getArguments().getParcelable("results")).res);
+            Collections.sort(results, new ResultsComparator());
         }
         getActivity().setTitle("Výsledky");
         new PostToServer(getActivity()).execute();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_results, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        /*if (item.getItemId() == R.id.nav_continue) {
+            getActivity().finish();
+        } else*/ if (item.getItemId() == R.id.nav_next) {
+            getActivity().finish();
+            startActivity(new Intent(getActivity(), LearnActivity.class));
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Nullable

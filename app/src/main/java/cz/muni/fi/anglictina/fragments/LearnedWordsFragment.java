@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import cz.muni.fi.anglictina.R;
@@ -31,6 +32,7 @@ import cz.muni.fi.anglictina.db.WordContract;
 import cz.muni.fi.anglictina.db.WordDbHelper;
 import cz.muni.fi.anglictina.db.model.Word;
 import cz.muni.fi.anglictina.utils.Categories;
+import cz.muni.fi.anglictina.utils.ResultsComparator;
 import cz.muni.fi.anglictina.utils.adapters.ResultsAdapter;
 
 /**
@@ -174,6 +176,7 @@ public class LearnedWordsFragment extends Fragment {
 
         @Override
         protected void onPostExecute(List<Pair<Word, Boolean>> list) {
+            Collections.sort(list, new ResultsComparator());
             mList.setAdapter(new ResultsAdapter(getActivity(), list));
         }
     }
