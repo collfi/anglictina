@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
@@ -26,6 +27,7 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
@@ -38,13 +40,16 @@ import cz.muni.fi.anglictina.utils.adapters.ResultsAdapter;
 /**
  * Created by collfi on 3. 2. 2016.
  */
-public class LearnedWordsFragment extends Fragment {
+public class LearnedWordsFragment extends Fragment implements TextToSpeech.OnInitListener{
     private ExpandableListView mList;
     private AutoCompleteTextView mFilter;
+    private ResultsAdapter mResultsAdapter;
+    private TextToSpeech tts;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        tts = new TextToSpeech(getActivity(), this);
     }
 
     @Nullable
@@ -177,7 +182,24 @@ public class LearnedWordsFragment extends Fragment {
         @Override
         protected void onPostExecute(List<Pair<Word, Boolean>> list) {
             Collections.sort(list, new ResultsComparator());
-            mList.setAdapter(new ResultsAdapter(getActivity(), list));
+            mResultsAdapter = new ResultsAdapter(getActivity(), list, tts);
+            mList.setAdapter(mResultsAdapter);
         }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status != TextToSpeech.ERROR) {
+            tts.setLanguage(Locale.ENGLISH);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onStop();
     }
 }

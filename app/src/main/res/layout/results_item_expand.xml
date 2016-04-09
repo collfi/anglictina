@@ -3,25 +3,52 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="#ffffff"
-              android:gravity="top|bottom"
+              android:gravity="center_vertical"
               android:orientation="horizontal"
               android:padding="10dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/play">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.54"
+            android:padding="10dp"
+            android:src="@drawable/ic_hearing_black_24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.54"
+            android:padding="10dp"
+            android:text="Přehrát"
+            android:textColor="#000000"/>
+    </LinearLayout>
 
     <TextView
         android:id="@+id/categories"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:alpha="0.54"
         android:padding="5dp"
-        android:textColor="#000000"/>
+        android:textColor="#000000"
+        android:visibility="gone"/>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        />
+
 
     <Button
         android:id="@+id/change_button"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:padding="5dp"
+        android:padding="10dp"
         android:text="Změnit překlad"/>
 
 </LinearLayout>

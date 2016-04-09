@@ -51,6 +51,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import cz.muni.fi.anglictina.App;
+import cz.muni.fi.anglictina.BuildConfig;
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
 import cz.muni.fi.anglictina.db.WordDbHelper;
@@ -68,7 +69,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        if (getResources().getBoolean(R.bool.portrait_only)) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+        }
         setContentView(R.layout.activity_main);
 //        test();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -84,11 +90,13 @@ public class MainActivity extends AppCompatActivity
         LocalBroadcastManager.getInstance(this).registerReceiver(onDbFinishedReceiver, new IntentFilter(AlarmReceiver.INTENT_UPDATE));
 
         if (!getDatabasePath("words.db").exists()) {
-            pd = new ProgressDialog(this);
-            pd.setMessage("Update databázy. Čekejte prosím...");
-            pd.setCanceledOnTouchOutside(false);
-            pd.setCancelable(false);
-            pd.show();
+            if (!BuildConfig.DEBUG) {
+                pd = new ProgressDialog(this);
+                pd.setMessage("Update databázy. Čekejte prosím...");
+                pd.setCanceledOnTouchOutside(false);
+                pd.setCancelable(false);
+                pd.show();
+            }
             try {
                 WordDbHelper helper = new WordDbHelper(this);
                 SQLiteDatabase db = helper.getWritableDatabase();
@@ -145,7 +153,9 @@ public class MainActivity extends AppCompatActivity
         sCorrect = sp.getInt("correct", 0);
         sIncorrect = sp.getInt("incorrect", 0);
 
-        firstTime();
+        if (!BuildConfig.DEBUG) {
+            firstTime();
+        }
     }
 
     @Override
@@ -232,18 +242,11 @@ public class MainActivity extends AppCompatActivity
 //        }
         WordDbHelper helper = new WordDbHelper(this);
         SQLiteDatabase db = helper.getWritableDatabase();
-        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME + " ORDER BY " +
-                WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " ASC", null);
-
+        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME + " WHERE " +
+                WordContract.WordEntry.COLUMN_NAME_WORD + " = \"honor\"", null);
         c.moveToFirst();
         Log.i("zxcv", c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)) + "");
-        Log.i("zxcv", 1 / (1 + (float) Math.exp(-(2.44 - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY))))) + "");
 
-        c.moveToLast();
-        Log.i("zxcv", c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)) + "");
-
-        Log.i("zxcv", 1 / (1 + (float) Math.exp(-(2.44 - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY))))) + "");
-        Log.i("zxcv", 1 / (1 + (float) Math.exp(-(2.44 - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY))))) + "");
         c.close();
         db.close();
 

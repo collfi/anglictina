@@ -97,7 +97,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             WordContract.WordEntry.COLUMN_NAME_FREQUENCY, WordContract.WordEntry.COLUMN_NAME_PERCENTIL};
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {//todo set max smooth?
         super.onCreate(savedInstanceState);
         tts = new TextToSpeech(getActivity(), this);
         mPreferences = getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE);
@@ -738,12 +738,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 ed.putInt(s + "_incorrect", resultsPref.getInt(s + "_incorrect", 0) + 1);
             }
         }
-        if (direction == 1) {
-            if (PreferenceManager.getDefaultSharedPreferences(getActivity())
-                    .getBoolean("pref_sounds", true)) {
-                readWord(v);
-            }
-        }
+//        if (direction == 1) {
+//            if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+//                    .getBoolean("pref_sounds", true)) {
+//                readWord(v);
+//            }
+//        }
         ed.apply();
         if (MainActivity.sIncorrect + MainActivity.sCorrect > 10) {
             saveToPost(correct, selectedButton, repeating ? 0 : newWordDiff - mCurrentWord.getDifficulty());
@@ -898,14 +898,18 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             repeating = false;
             return false;
         }
-        reviseCount++;
 //        Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
 //                LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
 //                + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " ASC LIMIT 1", null);
         // order by diff
         Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
                 LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
-                + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null); //todo
+                + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null);
+        //order custom function first?
+//        Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
+//                LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
+//                + " ORDER BY (" + LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " * (1 / "
+//                + LearnedWordEntry.COLUMN_NAME_DIFFICULTY + ")) DESC LIMIT 1", null); //todo custom function?
         if (cur.moveToFirst()) {
             repeating = true;
 //            wordToRepeat = new Word();
@@ -920,6 +924,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             mCurrentWord.setDiffCoefficient(cur.getFloat(cur.getColumnIndexOrThrow(LearnedWordEntry.COLUMN_NAME_COEFFICIENT_DIFF)));
             cur.close();
             progress.setMax(progress.getMax() + 100);
+            reviseCount++;
             return true;
         } else {
             repeating = false;
@@ -1184,24 +1189,48 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             answer = mCurrentWord.getWord();
         }
         if (a.getText().toString().equals(answer)) {
+            if (direction == 1) {
+                if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+                        .getBoolean("pref_sounds", true)) {
+                    readWord(a);
+                }
+            }
             a.setBackground(getResources().getDrawable(R.drawable.button_correct));
             b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             selectedButton = 1;
         } else if (b.getText().toString().equals(answer)) {
+            if (direction == 1) {
+                if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+                        .getBoolean("pref_sounds", true)) {
+                    readWord(b);
+                }
+            }
             b.setBackground(getResources().getDrawable(R.drawable.button_correct));
             a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             selectedButton = 2;
         } else if (c.getText().toString().equals(answer)) {
+            if (direction == 1) {
+                if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+                        .getBoolean("pref_sounds", true)) {
+                    readWord(c);
+                }
+            }
             c.setBackground(getResources().getDrawable(R.drawable.button_correct));
             b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             a.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             d.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             selectedButton = 3;
         } else if (d.getText().toString().equals(answer)) {
+            if (direction == 1) {
+                if (PreferenceManager.getDefaultSharedPreferences(getActivity())
+                        .getBoolean("pref_sounds", true)) {
+                    readWord(d);
+                }
+            }
             d.setBackground(getResources().getDrawable(R.drawable.button_correct));
             b.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
             c.setBackground(getResources().getDrawable(R.drawable.button_incorrect));
@@ -1212,46 +1241,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     }
 
     public static class ClickToContinueDialog extends DialogFragment {
-
-        private LearningFragment mFragment;
-
-        @Override
-        public void onDismiss(DialogInterface dialog) {
-            mFragment.next();
-            mFragment = null;
-            super.onDismiss(dialog);
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            mFragment = (LearningFragment) getFragmentManager().findFragmentById(R.id.learning_fragment);
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            LayoutInflater inflater = getActivity().getLayoutInflater();
-
-            // Inflate and set the layout for the dialog
-            // Pass null as the parent view because its going in the dialog layout
-            View view = inflater.inflate(R.layout.dialog_incorrect, null);
-
-            builder.setView(view);
-
-
-            final Dialog d = builder.create();
-            TextView tap = (TextView) view.findViewById(R.id.tap_to_continue);
-
-            tap.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    d.dismiss();
-                }
-            });
-            d.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-            d.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-            return d;
-        }
-    }
-
-    public static class CorrectDialogFragment extends DialogFragment {
 
         private LearningFragment mFragment;
 

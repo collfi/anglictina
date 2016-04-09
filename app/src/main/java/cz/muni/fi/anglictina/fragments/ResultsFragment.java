@@ -7,6 +7,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
@@ -44,8 +45,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
+import cz.muni.fi.anglictina.BuildConfig;
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.activities.LearnActivity;
 import cz.muni.fi.anglictina.db.model.Word;
@@ -57,10 +60,12 @@ import cz.muni.fi.anglictina.utils.adapters.ResultsAdapter;
 /**
  * Created by collfi on 31. 1. 2016.
  */
-public class ResultsFragment extends Fragment {
+public class ResultsFragment extends Fragment implements TextToSpeech.OnInitListener{
     private List<Pair<Word, Boolean>> results;
     private ExpandableListView mList;
     private AutoCompleteTextView mFilter;
+    private ResultsAdapter mResultsAdapter;
+    private TextToSpeech tts;
 
     public static ResultsFragment newInstance(Results r) {
         ResultsFragment fragment = new ResultsFragment();
@@ -81,7 +86,10 @@ public class ResultsFragment extends Fragment {
             Collections.sort(results, new ResultsComparator());
         }
         getActivity().setTitle("Výsledky");
-        new PostToServer(getActivity()).execute();
+        tts = new TextToSpeech(getActivity(), this);
+        if (!BuildConfig.DEBUG) {
+            new PostToServer(getActivity()).execute();
+        }
     }
 
     @Override
@@ -112,7 +120,8 @@ public class ResultsFragment extends Fragment {
                 cats.add(Categories.categoriesForHuman[Categories.categoriesForHumanAscii.indexOf(s)]);
             }
         }
-        mList.setAdapter(new ResultsAdapter(getActivity(), results));
+        mResultsAdapter = new ResultsAdapter(getActivity(), results, tts);
+        mList.setAdapter(mResultsAdapter);
 
         mFilter = (AutoCompleteTextView) view.findViewById(R.id.filter);
         mFilter.setAdapter(new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1,
@@ -219,7 +228,8 @@ public class ResultsFragment extends Fragment {
 
         @Override
         protected void onPostExecute(List<Pair<Word, Boolean>> list) {
-            mList.setAdapter(new ResultsAdapter(getActivity(), list));
+            mResultsAdapter = new ResultsAdapter(getActivity(), list, tts);
+            mList.setAdapter(mResultsAdapter);
         }
 
         public boolean contains(String what, String[] where) {
@@ -242,7 +252,7 @@ public class ResultsFragment extends Fragment {
 
         @Override
         protected Integer doInBackground(Void... params) {
-            try { //todo getactivity, radsej context
+            try {
                 SharedPreferences pref = mContext.getSharedPreferences("post", Context.MODE_PRIVATE);
                 JSONArray resultsArray = new JSONArray(pref.getString("results", "[]"));
                 if (resultsArray.length() == 0) {
@@ -326,6 +336,22 @@ public class ResultsFragment extends Fragment {
             mContext = null;
 
         }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status != TextToSpeech.ERROR) {
+            tts.setLanguage(Locale.ENGLISH);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onStop();
     }
 
     @Override

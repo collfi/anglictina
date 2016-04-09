@@ -6,19 +6,23 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -44,12 +48,13 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
     private List<Pair<Word, Boolean>> mResults;
     private Context mContext;
     private SharedPreferences resultsPref;
+    private TextToSpeech tts;
 
-    public ResultsAdapter(Context context, List<Pair<Word, Boolean>> list) {
+    public ResultsAdapter(Context context, List<Pair<Word, Boolean>> list, TextToSpeech tts) {
         mContext = context;
         mResults = list;
         resultsPref = mContext.getSharedPreferences("results", Context.MODE_PRIVATE);
-
+        this.tts = tts;
     }
 
     @Override
@@ -132,6 +137,7 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
             holder = new ChildViewHolder();
             holder.categories = (TextView) convertView.findViewById(R.id.categories);
             holder.change = (Button) convertView.findViewById(R.id.change_button);
+            holder.playLayout = (LinearLayout) convertView.findViewById(R.id.play);
             convertView.setTag(holder);
         } else {
             holder = (ChildViewHolder) convertView.getTag();
@@ -160,6 +166,17 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
                         show(((AppCompatActivity) mContext).getSupportFragmentManager(), "translations");
             }
         });
+        holder.playLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("zxcv", "speak");
+                if (Build.VERSION.SDK_INT < 21) {
+                    tts.speak(mResults.get(groupPosition).first.getWord(), TextToSpeech.QUEUE_FLUSH, null);
+                } else {
+                    tts.speak(mResults.get(groupPosition).first.getWord(), TextToSpeech.QUEUE_FLUSH, null, "test");
+                }
+            }
+        });
         return convertView;
     }
 
@@ -178,6 +195,7 @@ public class ResultsAdapter extends BaseExpandableListAdapter {
     private static class ChildViewHolder {
         TextView categories;
         Button change;
+        LinearLayout playLayout;
     }
 
     public static class TranslationsDialogFragment extends DialogFragment {

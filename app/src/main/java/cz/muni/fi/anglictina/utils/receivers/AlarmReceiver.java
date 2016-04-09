@@ -14,6 +14,7 @@ import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.LocalBroadcastManager;
@@ -23,6 +24,7 @@ import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,6 +53,7 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.i("zxcv", "received alarm " + SystemClock.elapsedRealtime());
         mContext = context;
         sp = PreferenceManager.getDefaultSharedPreferences(context);
         if (isOnline()) {
@@ -63,20 +66,23 @@ public class AlarmReceiver extends BroadcastReceiver {
             manager.set(AlarmManager.RTC, System.currentTimeMillis() + INTERVAL, pendingIntent);
             Intent intent2 = new Intent(INTENT_UPDATE);
             LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent2);
-            if (App.isActivityVisible()) {
+            if (App.isAppVisible()) {
                 Toast.makeText(context, "Nejste připojen k Internetu.", Toast.LENGTH_SHORT).show();
             }
         }
-        if (!App.isActivityVisible()) {
+        if (!App.isAppVisible()) {
             checkRepeating();
         }
     }
 
     public boolean checkRepeating() {
         SQLiteDatabase db = new WordDbHelper(mContext).getReadableDatabase();
+//        Cursor cur = db.rawQuery("SELECT * FROM " + WordContract.LearnedWordEntry.TABLE_NAME + " WHERE " +
+//                WordContract.LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + System.currentTimeMillis() / 1000
+//                + " ORDER BY " + WordContract.LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " ASC LIMIT 1", null);
         Cursor cur = db.rawQuery("SELECT * FROM " + WordContract.LearnedWordEntry.TABLE_NAME + " WHERE " +
                 WordContract.LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + System.currentTimeMillis() / 1000
-                + " ORDER BY " + WordContract.LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " ASC LIMIT 1", null);
+                + " ORDER BY " + WordContract.LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null);
         if (cur.moveToFirst()) {
             if (PreferenceManager.getDefaultSharedPreferences(mContext)
                     .getBoolean("pref_notifications", true)) {
@@ -128,10 +134,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         @Override
         protected Integer doInBackground(Void... params) {
             try {
-
-
-                URL url = new URL("http://collfi.pythonanywhere.com/get/" + sp.getInt("last_sync", 0)); //
-
+                URL url = new URL("http://collfi.pythonanywhere.com/get/" + sp.getLong("last_sync", 0));
+                Log.i("last_sync", "from: " + sp.getLong("last_sync", 0));
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestMethod("GET");
@@ -152,38 +156,67 @@ public class AlarmReceiver extends BroadcastReceiver {
                 }
                 br.close();
                 Log.d("get output", responseOutput.toString());
-
                 JSONArray ja = new JSONArray(responseOutput.toString());
-                db.beginTransaction();
+                if (sp.getLong("last_sync", 0) == 0) {
+                    Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME, null);
+                    JSONObject jo = new JSONObject();
+                    while (c.moveToNext()) {
+                        String s = c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_TRANSLATIONS))
+                                + "," + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_FREQUENCY))
+                                + "," + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_PERCENTIL))
+                                + "," + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_LEARNED))
+                                + "," + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_CATEGORIES))
+                                + "," + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_HUMAN_CATEGORIES))
+                                + "," + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_PRONUNCIATION));
+                        jo.put(c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)), s);
+                    }
+                    db.delete(WordContract.WordEntry.TABLE_NAME, null, null);
 
-                String sql = "UPDATE " + WordContract.WordEntry.TABLE_NAME + " SET "
-                        + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " = ?"
-                        + ", "
-                        + WordContract.WordEntry.COLUMN_NAME_LEARNED_COUNT + " = ?"
-                        + " WHERE " + WordContract.WordEntry.COLUMN_NAME_WORD + " = ?;";
-                SQLiteStatement statement = db.compileStatement(sql);
-                Log.i("firstupdate", "start " + System.currentTimeMillis());
-                for (int i = 0; i < ja.length(); i++) {
-                    //todo check if is learned
-//                    ContentValues cv = new ContentValues();
-//                        cv.put(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY,
-//                                ja.getJSONObject(i).getDouble("difficulty"));
-//                    cv.put(WordContract.WordEntry.COLUMN_NAME_LEARNED_COUNT,
-//                            ja.getJSONObject(i).getInt("learned_count"));//++
-//                    db.update(WordContract.WordEntry.TABLE_NAME, cv, WordContract.WordEntry.COLUMN_NAME_WORD + " = ?",
-//                            new String[]{ja.getJSONObject(i).getString("english")});
+                    String sql = "INSERT INTO " + WordContract.WordEntry.TABLE_NAME + " VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+                    SQLiteStatement statement = db.compileStatement(sql);
+                    db.beginTransaction();
+                    for (int i = 0; i < ja.length(); i++) {
+                        String[] word = jo.getString(ja.getJSONObject(i).getString("english")).split(",");
 
-                    statement.clearBindings();
-                    statement.bindDouble(1, ja.getJSONObject(i).getDouble("difficulty"));
-                    statement.bindLong(2, ja.getJSONObject(i).getInt("learned_count"));
-                    statement.bindString(3, ja.getJSONObject(i).getString("english"));
-                    statement.execute();
+                        statement.clearBindings();
+                        statement.bindLong(1, System.nanoTime());
+                        statement.bindString(2, ja.getJSONObject(i).getString("english"));
+                        statement.bindString(3, word[0]);
+                        statement.bindLong(4, Integer.valueOf(word[1]));
+                        statement.bindLong(5, Integer.valueOf(word[2]));
+                        statement.bindDouble(6, ja.getJSONObject(i).getDouble("difficulty"));
+                        statement.bindLong(7, ja.getJSONObject(i).getInt("learned_count"));
+                        statement.bindLong(8, Integer.valueOf(word[3]));
+                        statement.bindString(9, word[4]);
+                        statement.bindString(10, word[5]);
+                        statement.bindString(11, word[6]);
+                        statement.execute();
+                    }
 
+                    db.setTransactionSuccessful();
+                    db.endTransaction();
+                    c.close();
+
+                } else {
+                    String sql = "UPDATE " + WordContract.WordEntry.TABLE_NAME + " SET "
+                            + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " = ?"
+                            + ", "
+                            + WordContract.WordEntry.COLUMN_NAME_LEARNED_COUNT + " = ?"
+                            + " WHERE " + WordContract.WordEntry.COLUMN_NAME_WORD + " = ?;";
+                    SQLiteStatement statement = db.compileStatement(sql);
+                    db.beginTransaction();
+
+                    for (int i = 0; i < ja.length(); i++) {
+                        //todo check if is learned
+                        statement.clearBindings();
+                        statement.bindDouble(1, ja.getJSONObject(i).getDouble("difficulty"));
+                        statement.bindLong(2, ja.getJSONObject(i).getInt("learned_count"));
+                        statement.bindString(3, ja.getJSONObject(i).getString("english"));
+                        statement.execute();
+                    }
+                    db.setTransactionSuccessful();
+                    db.endTransaction();
                 }
-                db.setTransactionSuccessful();
-                db.endTransaction();
-                Log.i("firstupdate", "end " + System.currentTimeMillis());
-
             } catch (JSONException e) {
                 e.printStackTrace();
                 Log.e("settings", "json exception downloading. " + e.getLocalizedMessage());
@@ -203,12 +236,14 @@ public class AlarmReceiver extends BroadcastReceiver {
             LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
             db.close();
             SharedPreferences.Editor ed = sp.edit();
-            ed.putInt("last_sync", (int) (System.currentTimeMillis() / 1000));
+            ed.putLong("last_sync", System.currentTimeMillis() / 1000);
             ed.apply();
-            if (integer.equals(0)) {
-                Toast.makeText(mContext, "Stahování dat úspěšne dokončeno.", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(mContext, "Chyba při stahování dat.", Toast.LENGTH_SHORT).show();
+            if (App.isAppVisible()) {
+                if (integer.equals(0)) {
+                    Toast.makeText(mContext, "Stahování dat úspěšne dokončeno.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mContext, "Chyba při stahování dat.", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
