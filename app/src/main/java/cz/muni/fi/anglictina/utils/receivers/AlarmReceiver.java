@@ -134,8 +134,16 @@ public class AlarmReceiver extends BroadcastReceiver {
         @Override
         protected Integer doInBackground(Void... params) {
             try {
-                URL url = new URL("http://collfi.pythonanywhere.com/get/" + sp.getLong("last_sync", 0));
-                Log.i("last_sync", "from: " + sp.getLong("last_sync", 0));
+                String lastSync = "0";
+                try {
+                    lastSync = String.valueOf(sp.getLong("last_sync", 0L));
+                } catch (ClassCastException e) {
+                    lastSync = String.valueOf(sp.getInt("last_sync", 0));
+                    sp.edit().putLong("last_sync", Long.valueOf(lastSync)).commit();
+                    Log.e("alarmReceiver", "class exception");
+                }
+                URL url = new URL("http://collfi.pythonanywhere.com/get/" + lastSync);
+                Log.i("last_sync", "from: " + sp.getLong("last_sync", 0L));
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestMethod("GET");
@@ -157,7 +165,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 br.close();
                 Log.d("get output", responseOutput.toString());
                 JSONArray ja = new JSONArray(responseOutput.toString());
-                if (sp.getLong("last_sync", 0) == 0) {
+                if (sp.getLong("last_sync", 0L) == 0L) {
                     Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME, null);
                     JSONObject jo = new JSONObject();
                     while (c.moveToNext()) {

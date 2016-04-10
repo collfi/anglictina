@@ -8,8 +8,8 @@ android {
         applicationId "cz.muni.fi.anglictina"
         minSdkVersion 16
         targetSdkVersion 23
-        versionCode 4
-        versionName "1.0.1"
+        versionCode 5
+        versionName "1.0.2"
     }
     signingConfigs {
         release {
