@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.TimeZone;
 
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.activities.MainActivity;
@@ -60,7 +61,8 @@ import cz.muni.fi.anglictina.utils.WordLevenshteinComparator;
 public class LearningFragment extends Fragment implements TextToSpeech.OnInitListener {
     //    public static final long INTERVAL = 43200;//12 hours
     public static final long INTERVAL = 86400;//24 hours
-//        public static final long INTERVAL = 10;//10 sec
+    public static final long DAY_MILISECONDS = 86400000;
+    //        public static final long INTERVAL = 10;//10 sec
     public static final float DEFAULT_WORD_COEFFICIENT = 2.5f;
     private float mSkill;
     private Button a;
@@ -301,7 +303,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
                 mWords.clear();
 
-                new ClickToContinueDialog().show(getFragmentManager(), "incorrect_dialog");
+                ClickToContinueDialog.newInstance(correct).show(getFragmentManager(), "incorrect_dialog");
             }
 
             public boolean onTouch(View v, MotionEvent event) {
@@ -461,9 +463,6 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             }
         }
 
-//        mViewSkill.setText(String.format("%.5f", mSkill));
-//        float chance = 1 / (1 + (float) Math.exp(-(mSkill - mCurrentWord.getDifficulty())));
-//        mChance.setText(String.format("%.2f", chance));
     }
 
     @Override
@@ -750,7 +749,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         }
         mWords.clear();
         if (correct) {
-            final ClickToContinueDialog idf = new ClickToContinueDialog();
+            final ClickToContinueDialog idf = ClickToContinueDialog.newInstance(correct);
             idf.show(getFragmentManager(), "incorrect_dialog");
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -761,7 +760,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             }, 1000);
         } else {
             v.setBackground(getResources().getDrawable(R.drawable.button_incorrect_clicked));
-            new ClickToContinueDialog().show(getFragmentManager(), "incorrect_dialog");
+            ClickToContinueDialog.newInstance(correct).show(getFragmentManager(), "incorrect_dialog");
         }
     }
 
@@ -905,6 +904,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
                 LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
                 + " ORDER BY " + LearnedWordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null);
+        //order by ratio correct-incorrect
+//        Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
+//                LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
+//                + " ORDER BY (" + LearnedWordEntry.COLUMN_NAME_INCORRECT_COUNT
+//                + " - " + LearnedWordEntry.COLUMN_NAME_CORRECT_COUNT + ") DESC LIMIT 1", null);
+
         //order custom function first?
 //        Cursor cur = mWordsDb.rawQuery("SELECT * FROM " + LearnedWordEntry.TABLE_NAME + " WHERE " +
 //                LearnedWordEntry.COLUMN_NAME_TIME_TO_REPEAT + " < " + getTimeSeconds()
@@ -1039,8 +1044,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
     public void getDistractorsSimilarDifficultySimilarCategory() {
         Cursor cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
-                + "%'"
+                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + mCurrentWord.getCategories()[0]
+                + "%\""
                 + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
         fromCursorToWords(cursor);
         cursor.close();
@@ -1053,8 +1058,8 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         Cursor cursor;
         do {
             cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
-                    + "%'"
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + mCurrentWord.getCategories()[0]
+                    + "%\""
                     + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
             magic += 0.1;
 
@@ -1100,13 +1105,13 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
         //obsahuje vsetky kategorie (rovnake poradie)
         cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + arrayToString(mCurrentWord.getCategories())
-                + "%' ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
+                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + arrayToString(mCurrentWord.getCategories())
+                + "%\" ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
         fromCursorToWords(cursor);
         if (mWords.size() < 6) {
             cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
-                    + "%' ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 30", null);
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + mCurrentWord.getCategories()[0]
+                    + "%\" ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 30", null);
             fromCursorToWords(cursor);
             if (mWords.size() < 4) {
                 cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
@@ -1127,13 +1132,13 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         Cursor cursor;
         //obsahuje vsetky kategorie (rovnake poradie)
         cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + arrayToString(mCurrentWord.getCategories())
-                + "%' LIMIT 40", null);
+                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + arrayToString(mCurrentWord.getCategories())
+                + "%\" LIMIT 40", null);
         fromCursorToWords(cursor);
         if (mWords.size() < 6) {
             cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
-                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE '%" + mCurrentWord.getCategories()[0]
-                    + "%' ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 30", null);
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + mCurrentWord.getCategories()[0]
+                    + "%\" ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 30", null);
             fromCursorToWords(cursor);
             if (mWords.size() < 4) {
                 cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
@@ -1243,12 +1248,29 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     public static class ClickToContinueDialog extends DialogFragment {
 
         private LearningFragment mFragment;
+        private boolean correct;
+
+        public static ClickToContinueDialog newInstance(boolean correct) {
+            ClickToContinueDialog ctc = new ClickToContinueDialog();
+            Bundle args = new Bundle();
+            args.putBoolean("correct", correct);
+            ctc.setArguments(args);
+            return ctc;
+        }
 
         @Override
         public void onDismiss(DialogInterface dialog) {
             mFragment.next();
             mFragment = null;
             super.onDismiss(dialog);
+        }
+
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            if (getArguments() != null) {
+                correct = getArguments().getBoolean("correct");
+            }
         }
 
         @Override
@@ -1260,20 +1282,36 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 
             // Inflate and set the layout for the dialog
             // Pass null as the parent view because its going in the dialog layout
-            View view = inflater.inflate(R.layout.dialog_incorrect, null);
+            View view = inflater.inflate(R.layout.dialog_click_to_continue, null);
 
             builder.setView(view);
 
 
             final Dialog d = builder.create();
+            ProgressBar progress = (ProgressBar) view.findViewById(R.id.tap_to_progress);
             TextView tap = (TextView) view.findViewById(R.id.tap_to_continue);
+            if (correct) {
+                tap.setVisibility(View.GONE);
+                progress.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        d.dismiss();
+                    }
+                });
+                ObjectAnimator animation = ObjectAnimator.ofInt(progress, "progress", 0);
+                animation.setDuration(1000);
+                animation.setInterpolator(new LinearInterpolator());
+                animation.start();
+            } else {
+                progress.setVisibility(View.GONE);
+                tap.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        d.dismiss();
+                    }
+                });
+            }
 
-            tap.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    d.dismiss();
-                }
-            });
             d.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
             d.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
             return d;
@@ -1351,6 +1389,23 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         getFragmentManager().popBackStack();
         Fragment f = ResultsFragment.newInstance(r);
         getFragmentManager().beginTransaction().add(R.id.learning_layout, f, "results").commit();
+
+        SharedPreferences streakPref = getActivity().getSharedPreferences("streak", Context.MODE_PRIVATE);
+        float daysSinceNow = ((float) System.currentTimeMillis() + TimeZone.getDefault()
+                .getOffset(System.currentTimeMillis())) / DAY_MILISECONDS;
+        float daysSinceLast = ((float) streakPref.getLong("last_set", 0L)) / DAY_MILISECONDS;
+        int days = (int) daysSinceNow - (int) daysSinceLast;
+        if (days == 1) {
+            streakPref.edit().putInt("current", streakPref.getInt("current", 0) + 1).commit();
+        } else if (streakPref.getInt("current", 0) == 0) {
+            streakPref.edit().putInt("current", 1).commit();
+        }
+
+        if (streakPref.getInt("current", 0) > streakPref.getInt("record", 0)) {
+            streakPref.edit().putInt("record", streakPref.getInt("current", 0)).commit();
+        }
+        streakPref.edit().putLong("last_set", System.currentTimeMillis() + TimeZone.getDefault()
+                .getOffset(System.currentTimeMillis())).apply();
     }
 
     public void saveToPost(boolean correct, int selected, float diffChange) {
@@ -1481,7 +1536,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         }
         mWords.clear();
         if (correct) {
-            final ClickToContinueDialog idf = new ClickToContinueDialog();
+            final ClickToContinueDialog idf = ClickToContinueDialog.newInstance(correct);
             idf.show(getFragmentManager(), "incorrect_dialog");
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -1496,7 +1551,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             if (v != null) {
                 v.setBackground(getResources().getDrawable(R.drawable.button_incorrect_clicked));
             }
-            new ClickToContinueDialog().show(getFragmentManager(), "incorrect_dialog");
+            ClickToContinueDialog.newInstance(correct).show(getFragmentManager(), "incorrect_dialog");
         }
     }
 

@@ -6,77 +6,90 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--<Space-->
-    <!--android:id="@+id/space"-->
-    <!--android:layout_width="120dp"-->
-    <!--android:layout_height="15dp"-->
-    <!--android:layout_alignParentEnd="true"-->
-    <!--android:layout_alignParentRight="true"-->
-    <!--android:layout_marginEnd="15dp"-->
-    <!--android:layout_marginRight="15dp"-->
-    <!--android:layout_marginTop="?attr/actionBarSize"/>-->
-
-    <!--<com.github.rahatarmanahmed.cpv.CircularProgressView-->
-    <!--android:id="@+id/skill_progress"-->
-    <!--android:layout_width="100dp"-->
-    <!--android:layout_height="100dp"-->
-    <!--android:layout_alignParentEnd="true"-->
-    <!--android:layout_alignParentRight="true"-->
-    <!--android:layout_below="@+id/space"-->
-    <!--android:layout_marginEnd="15dp"-->
-    <!--android:layout_marginRight="15dp"-->
-    <!--app:cpv_animAutostart="true"-->
-    <!--app:cpv_color="?attr/colorAccent"-->
-    <!--app:cpv_indeterminate="false"/>-->
-
-    <!--<TextView-->
-    <!--android:id="@+id/skill"-->
-    <!--android:layout_width="100dp"-->
-    <!--android:layout_height="100dp"-->
-    <!--android:layout_alignParentEnd="true"-->
-    <!--android:layout_alignParentRight="true"-->
-    <!--android:layout_below="@id/space"-->
-    <!--android:layout_marginEnd="15dp"-->
-    <!--android:layout_marginRight="15dp"-->
-    <!--android:gravity="center"-->
-    <!--android:text="10"-->
-    <!--android:textColor="#000000"-->
-    <!--android:textSize="45sp"/>-->
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_trending_up_black_24dp"
+            android:alpha="0.54"
+            android:id="@+id/skill_icon"
+            android:layout_alignBottom="@+id/skill_text"
+            android:layout_alignTop="@+id/skill_text"/>
 
         <TextView
             android:id="@+id/skill_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="?attr/actionBarSize"
-            android:minWidth="230dp"
+            android:minWidth="250dp"
             android:padding="10dp"
+            android:layout_toRightOf="@+id/skill_icon"
             android:text="Vaše úroveň"
             android:textColor="#000000"
             android:textSize="17sp"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_done_black_24dp"
+            android:alpha="0.54"
+            android:id="@+id/correct_icon"
+            android:layout_alignBottom="@+id/correct_text"
+            android:layout_alignTop="@+id/correct_text"/>
 
         <TextView
             android:id="@+id/correct_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/skill_text"
-            android:minWidth="230dp"
+            android:minWidth="250dp"
+            android:layout_toRightOf="@+id/correct_icon"
             android:padding="10dp"
             android:text="Počet správných odpovědí"
             android:textColor="#000000"
             android:textSize="17sp"/>
 
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_clear_black_24dp"
+            android:alpha="0.54"
+            android:id="@+id/incorrect_icon"
+            android:layout_alignBottom="@+id/incorrect_text"
+            android:layout_alignTop="@+id/incorrect_text"/>
         <TextView
             android:id="@+id/incorrect_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/correct_text"
-            android:minWidth="230dp"
+            android:minWidth="250dp"
+            android:layout_toRightOf="@+id/incorrect_icon"
             android:padding="10dp"
             android:text="Počet nesprávných odpovědí"
+            android:textColor="#000000"
+            android:textSize="17sp"/>
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_whatshot_black_24dp"
+            android:alpha="0.54"
+            android:id="@+id/streak_icon"
+            android:layout_alignBottom="@+id/streak_text"
+            android:layout_alignTop="@+id/streak_text"/>
+
+        <TextView
+            android:id="@+id/streak_text"
+            android:layout_width="wrap_content"
+            android:layout_toRightOf="@+id/streak_icon"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/incorrect_text"
+            android:minWidth="250dp"
+            android:padding="10dp"
+            android:text="Počet dnů v řadě / rekord"
             android:textColor="#000000"
             android:textSize="17sp"/>
 
@@ -84,8 +97,10 @@
             android:id="@+id/skill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/streak"
             android:layout_marginTop="?attr/actionBarSize"
             android:layout_toRightOf="@id/skill_text"
+            android:gravity="center"
             android:padding="10dp"
             android:textColor="#000000"
             android:textSize="17sp"/>
@@ -94,8 +109,10 @@
             android:id="@+id/correct"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/streak"
             android:layout_below="@+id/skill_text"
             android:layout_toRightOf="@id/correct_text"
+            android:gravity="center"
             android:padding="10dp"
             android:textColor="#000000"
             android:textSize="17sp"/>
@@ -104,8 +121,20 @@
             android:id="@+id/incorrect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/streak"
             android:layout_below="@+id/correct_text"
             android:layout_toRightOf="@id/incorrect_text"
+            android:gravity="center"
+            android:padding="10dp"
+            android:textColor="#000000"
+            android:textSize="17sp"/>
+
+        <TextView
+            android:id="@+id/streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/incorrect_text"
+            android:layout_toRightOf="@id/streak_text"
             android:padding="10dp"
             android:textColor="#000000"
             android:textSize="17sp"/>
@@ -113,41 +142,44 @@
     </RelativeLayout>
 
 
-
     <LinearLayout
+        android:id="@+id/buttons_layout"
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:id="@+id/buttons_layout"
         android:layout_above="@id/buttons_cd"
-        android:layout_marginBottom="15dp"
         android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15dp"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/button_settings"
-            android:layout_weight="1"
             style="@style/Widget.AppCompat.Button"
             android:layout_width="match_parent"
             android:layout_height="72dp"
-            android:background="@drawable/button"
             android:layout_marginBottom="15dp"
-            android:layout_marginRight="15dp"
-            android:layout_marginLeft="7.5dp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="7.5dp"
+            android:layout_weight="1"
+            android:background="@drawable/button"
+            android:ellipsize="marquee"
+            android:maxLines="2"
             android:text="Nastavení"
             android:textAllCaps="false"
             android:textSize="18sp"/>
 
         <Button
-            android:id="@+id/button_help"
+            android:id="@+id/button_learned"
             style="@style/Widget.AppCompat.Button"
             android:layout_width="match_parent"
             android:layout_height="72dp"
-            android:layout_weight="1"
-            android:layout_marginRight="7.5dp"
-            android:background="@drawable/button"
             android:layout_marginBottom="15dp"
-            android:layout_marginLeft="15dp"
-            android:text="Nápověda"
+            android:layout_marginLeft="7.5dp"
+            android:layout_marginRight="15dp"
+            android:layout_weight="1"
+            android:background="@drawable/button"
+            android:ellipsize="marquee"
+            android:maxLines="2"
+            android:text="Naučená slova"
             android:textAllCaps="false"
             android:textSize="18sp"/>
     </LinearLayout>
@@ -157,10 +189,10 @@
         style="@style/Widget.AppCompat.Button"
         android:layout_width="160dp"
         android:layout_height="72dp"
-        android:background="@drawable/button"
         android:layout_above="@id/buttons_layout"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="15dp"
+        android:background="@drawable/button"
         android:text="Start"
         android:textAllCaps="false"
         android:textSize="18sp"/>

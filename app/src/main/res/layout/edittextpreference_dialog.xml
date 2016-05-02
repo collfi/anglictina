@@ -10,7 +10,7 @@
         android:id="@android:id/edit"
         android:inputType="number"
         android:maxLength="2"
-        android:layout_marginLeft="30dp"
+        android:layout_marginLeft="20dp"
         android:selectAllOnFocus="true"
         android:imeOptions="actionDone"/>
 

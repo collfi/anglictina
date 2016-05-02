@@ -101,7 +101,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
                 builder.setTitle("Přehrávaní slov");
                 builder.setMessage("Automatické přehrávání vypnuto. Přehrávání je stále dostpuné při " +
                         "dlouhém podržení na anglické slovo.");
-                builder.setNeutralButton("Zrušit", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 

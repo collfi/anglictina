@@ -37,6 +37,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -65,10 +68,12 @@ public class MainActivity extends AppCompatActivity
     public static int sCorrect;
     public static int sIncorrect;
     private ProgressDialog pd;
+    private JSONArray testGraph;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//        new TestGraph().execute();
 //        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         if (getResources().getBoolean(R.bool.portrait_only)) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
@@ -156,6 +161,23 @@ public class MainActivity extends AppCompatActivity
         if (!BuildConfig.DEBUG) {
             firstTime();
         }
+
+
+//        SQLiteDatabase a = new WordDbHelper(this).getWritableDatabase();
+//        String[] d= {"%valentine's%"};
+//        Cursor c = a.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME
+//        + " WHERE " + WordContract.WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%valentine's%\"", null);
+//        if (c.moveToFirst()) {
+//            Log.i("zxcv", c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)) + " slovo");
+//        } else {
+//            Log.i("zxcv", "NOT FIRST");
+//        }
+//         c.close();
+//        a.close();
+//
+//        Integer b = 20;
+//        b = 30 + 20  + 40 + 60;
+//        b.equals(20);
     }
 
     @Override
@@ -179,8 +201,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
         } else if (id == R.id.nav_statistics) {
-            DialogFragment dialog = new StatisticsFragment();
-            dialog.show(getSupportFragmentManager(), "StatisticsDialogFragment");
+            startActivity(new Intent(this, StatisticsActivity.class));
         } else if (id == R.id.nav_revise) {
             startActivity(new Intent(this, LearnedWordsActivity.class));
         } else if (id == R.id.nav_feedback) {
@@ -458,4 +479,63 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
+
+    public class TestGraph extends AsyncTask<Void, Void, Integer> {
+
+        @Override
+        protected Integer doInBackground(Void... params) {
+            try {
+
+                URL url = new URL("http://www.fi.muni.cz/~xvalent2/dp/upload.txt");
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestMethod("GET");
+
+                int responseCode = connection.getResponseCode();
+                Log.d("GET", "MSG " + connection.getResponseMessage());
+                Log.d("GET RES", "" + responseCode);
+                if (responseCode != 200) {
+                    return responseCode;
+                }
+                final StringBuilder output = new StringBuilder("Request URL " + url);
+                output.append(System.getProperty("line.separator") + "Response Code " + responseCode);
+                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String line = "";
+                StringBuilder responseOutput = new StringBuilder();
+                while ((line = br.readLine()) != null) {
+                    responseOutput.append(line);
+                }
+                br.close();
+                Log.d("get output", responseOutput.toString());
+                JSONArray ja = new JSONArray(responseOutput.toString());
+                testGraph = ja;
+            } catch (JSONException e) {
+                e.printStackTrace();
+                Log.e("settings", "json exception downloading. " + e.getLocalizedMessage());
+            } catch (MalformedURLException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+            } catch (IOException e) {
+                Log.e("settings", e.getLocalizedMessage());
+                e.printStackTrace();
+            }
+            return 0;
+        }
+
+
+        // 1034 48 50 20 262 40 20 1314 210
+        // 1034 1082 1132 1152 1414 1454 1474 2788 2998
+        @Override
+        protected void onPostExecute(Integer integer) {
+            try {
+                for (int i = 0; i < testGraph.length(); i ++) {
+//                    Log.i("zxcv", testGraph.getJSONObject(i).getLong("time") + " " +testGraph.getJSONObject(i).getDouble("skill"));
+                    Log.i("zxcv", testGraph.getJSONObject(i).getString("current") + ' ' + testGraph.getJSONObject(i).getDouble("diff_change"));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

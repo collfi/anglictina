@@ -15,10 +15,13 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import java.util.Locale;
+import java.util.TimeZone;
 
 import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.activities.LearnActivity;
+import cz.muni.fi.anglictina.activities.LearnedWordsActivity;
 import cz.muni.fi.anglictina.activities.MainActivity;
 import cz.muni.fi.anglictina.activities.SettingsActivity;
 import cz.muni.fi.anglictina.db.WordContract;
@@ -28,6 +31,7 @@ import cz.muni.fi.anglictina.db.WordDbHelper;
  * Created by collfi on 24. 10. 2015.
  */
 public class MainFragment extends Fragment {
+    public static final int DAY_MILISECONDS = 86400000;
     private SharedPreferences mPreferences;
     //    private TextView mSkill;
 //    private CircularProgressView mSkillProgress;
@@ -35,6 +39,7 @@ public class MainFragment extends Fragment {
     private TextView mSkill;
     private TextView mCorrect;
     private TextView mIncorrect;
+    private TextView streak;
     private Button learn;
 
     @Override
@@ -50,6 +55,7 @@ public class MainFragment extends Fragment {
         mSkill = (TextView) view.findViewById(R.id.skill);
         mCorrect = (TextView) view.findViewById(R.id.correct);
         mIncorrect = (TextView) view.findViewById(R.id.incorrect);
+        streak = (TextView) view.findViewById(R.id.streak);
         learn = (Button) view.findViewById(R.id.button_start);
         learn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,11 +75,11 @@ public class MainFragment extends Fragment {
             }
         });
 
-        Button help = (Button) view.findViewById(R.id.button_help);
+        Button help = (Button) view.findViewById(R.id.button_learned);
         help.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getActivity(), "Zatím nic.", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(getActivity(), LearnedWordsActivity.class));
             }
         });
 
@@ -93,6 +99,10 @@ public class MainFragment extends Fragment {
     }
 
     public void computeUserSkill() {
+        if (MainActivity.sCorrect + MainActivity.sIncorrect == 0) {
+            mSkill.setText(String.format(Locale.getDefault(), "%.0f%%", 0f));
+            return;
+        }
         WordDbHelper helper = new WordDbHelper(getActivity());
         SQLiteDatabase db = helper.getReadableDatabase();
 //        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME + " ORDER BY " +
@@ -115,7 +125,7 @@ public class MainFragment extends Fragment {
 //        Log.i("skill", "" + getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0));
 //        Log.i("skill", "" + c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)));
 //        Log.i("skill", "" + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)));
-        mSkill.setText(String.format("%.0f%%", chance * 100));
+        mSkill.setText(String.format(Locale.getDefault(), "%.0f%%", chance * 100));
 
         c.close();
         db.close();
@@ -129,6 +139,36 @@ public class MainFragment extends Fragment {
         mCorrect.setText(String.valueOf(MainActivity.sCorrect));
         mIncorrect.setText(String.valueOf(MainActivity.sIncorrect));
         Log.i("QQQ", String.valueOf((int) mPreferences.getFloat("skill", 0)) + " " + ((int) ((mPreferences.getFloat("skill", 0) % 1) * 100)));
+
+
+
+        SharedPreferences streakPref = getActivity().getSharedPreferences("streak", Context.MODE_PRIVATE);
+//        Log.i("zxcv", System.currentTimeMillis() + "");
+//        Log.i("zxcv", streakPref.getInt("current", 15) + "");
+//        Log.i("zxcv", streakPref.getInt("record", 16) + "");
+//        Log.i("zxcv", streakPref.getLong("last_set", 20l) + "");
+//
+//
+        float daysSinceNow = ((float) System.currentTimeMillis() + TimeZone.getDefault()
+                .getOffset(System.currentTimeMillis())) / DAY_MILISECONDS;
+        float daysSinceLast = ((float) streakPref.getLong("last_set", 0L)) / DAY_MILISECONDS;
+        int days = (int) daysSinceNow - (int) daysSinceLast;
+        if (days >= 2) {
+            streakPref.edit().remove("current").commit();
+        }
+//        if (days > 1 && days < 2) {
+//            streakPref.edit().putInt("current", streakPref.getInt("current", 0) + 1).commit();
+//        } else if (days > 2) {
+//            streakPref.edit().remove("current").commit();
+//        } else if (streakPref.getLong("last_set", 0L) != 0L
+//                && streakPref.getInt("current", 0) == 0) {
+//            streakPref.edit().putInt("current", streakPref.getInt("current", 0) + 1).commit();
+//        }
+//
+//        if (streakPref.getInt("current", 0) > streakPref.getInt("record", 0)) {
+//            streakPref.edit().putInt("record", streakPref.getInt("current", 0)).commit();
+//        }
+        streak.setText(streakPref.getInt("current", 0) + " / " + streakPref.getInt("record", 0));
 
     }
 }

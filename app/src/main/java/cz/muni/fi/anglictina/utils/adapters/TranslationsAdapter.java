@@ -31,7 +31,7 @@ public class TranslationsAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int position) {
-        return position;
+        return translations.get(position);
     }
 
     @Override

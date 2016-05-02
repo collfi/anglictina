@@ -157,8 +157,8 @@ public class LearnedWordsFragment extends Fragment implements TextToSpeech.OnIni
                 String query = Normalizer.normalize(params[0], Normalizer.Form.NFD)
                         .replaceAll("\\p{InCOMBINING_DIACRITICAL_MARKS}+", "");
                 cursor = db.rawQuery("SELECT * FROM " + WordContract.LearnedWordEntry.TABLE_NAME
-                        + " WHERE " + WordContract.LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES + " LIKE '%"
-                        + query + "%'", null);
+                        + " WHERE " + WordContract.LearnedWordEntry.COLUMN_NAME_HUMAN_CATEGORIES + " LIKE \"%"
+                        + query + "%\"", null);
             }
             List<Pair<Word, Boolean>> results = new ArrayList<>();
             if (cursor.moveToFirst()) {

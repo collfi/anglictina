@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+    android:gravity="center"
+    android:background="@android:color/transparent">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#000000"
+        android:id="@+id/tap_to_continue"
+        android:gravity="center_horizontal"
+        android:background="@android:color/transparent"
+        android:text="Klepněte pro pokračování"
+        android:textSize="30sp"
+        android:paddingBottom="100dp"/>
+    <ProgressBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tap_to_progress"
+        android:gravity="center_horizontal"
+        android:paddingBottom="100dp"
+        android:progress="100"
+        android:indeterminate="false"
+        android:background="@android:color/transparent"/>
+
+</LinearLayout>
