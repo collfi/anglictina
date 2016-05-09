@@ -35,7 +35,6 @@ public class MainFragment extends Fragment {
     private SharedPreferences mPreferences;
     //    private TextView mSkill;
 //    private CircularProgressView mSkillProgress;
-    private int i;
     private TextView mSkill;
     private TextView mCorrect;
     private TextView mIncorrect;

@@ -1,7 +1,6 @@
 package cz.muni.fi.anglictina.activities;
 
 import android.app.AlarmManager;
-import android.app.Dialog;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -18,14 +17,11 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.TelephonyManager;
@@ -34,7 +30,6 @@ import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -164,8 +159,7 @@ public class MainActivity extends AppCompatActivity
 
 
 //        SQLiteDatabase a = new WordDbHelper(this).getWritableDatabase();
-//        String[] d= {"%valentine's%"};
-//        Cursor c = a.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME
+//        String[] d= {"%valentine's%"};//        Cursor c = a.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME
 //        + " WHERE " + WordContract.WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%valentine's%\"", null);
 //        if (c.moveToFirst()) {
 //            Log.i("zxcv", c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)) + " slovo");
@@ -218,27 +212,6 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public static class StatisticsFragment extends DialogFragment {
-        @NonNull
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            View v = getActivity().getLayoutInflater()
-                    .inflate(R.layout.fragment_statistics_dialog, null);
-            TextView c = (TextView) v.findViewById(R.id.correct);
-            TextView i = (TextView) v.findViewById(R.id.incorrect);
-            c.setText(String.valueOf(MainActivity.sCorrect));
-            i.setText(String.valueOf(MainActivity.sIncorrect));
-            builder.setPositiveButton("OK", null).setView(v);
-            // Create the AlertDialog object and return it
-            AlertDialog a = builder.create();
-            float density = getResources().getDisplayMetrics().density;
-            a.getWindow().setLayout((int) (160 * density), (int) (160 * density));
-            return a;
-        }
-    }
 
     public void firstTime() {
         SharedPreferences sp = getSharedPreferences("firstTime", Context.MODE_PRIVATE);
@@ -261,13 +234,14 @@ public class MainActivity extends AppCompatActivity
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-        WordDbHelper helper = new WordDbHelper(this);
-        SQLiteDatabase db = helper.getWritableDatabase();
-        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME + " WHERE " +
-                WordContract.WordEntry.COLUMN_NAME_WORD + " = \"honor\"", null);
-        c.moveToFirst();
-        Log.i("zxcv", c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)) + "");
 
+        SQLiteDatabase db = new WordDbHelper(this).getReadableDatabase();
+        Cursor c =db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME +
+                " ORDER BY " + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 50", null);
+        while (c.moveToNext()) {
+            Log.i("graf", c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)) + " "
+                    + c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)));
+        }
         c.close();
         db.close();
 
