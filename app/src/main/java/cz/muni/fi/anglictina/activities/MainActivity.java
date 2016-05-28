@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -47,6 +48,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 import cz.muni.fi.anglictina.App;
 import cz.muni.fi.anglictina.BuildConfig;
@@ -55,6 +58,7 @@ import cz.muni.fi.anglictina.db.WordContract;
 import cz.muni.fi.anglictina.db.WordDbHelper;
 import cz.muni.fi.anglictina.db.model.Word;
 import cz.muni.fi.anglictina.fragments.SettingsFragment;
+import cz.muni.fi.anglictina.utils.Categories;
 import cz.muni.fi.anglictina.utils.receivers.AlarmReceiver;
 
 
@@ -100,7 +104,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 WordDbHelper helper = new WordDbHelper(this);
                 SQLiteDatabase db = helper.getWritableDatabase();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words6.txt")));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(getAssets().open("words6_edit.txt")));
 
 
                 String sql = "INSERT INTO " + WordContract.WordEntry.TABLE_NAME + " VALUES (?,?,?,?,?,?,?,?,?,?,?);";
@@ -237,10 +241,34 @@ public class MainActivity extends AppCompatActivity
 
         SQLiteDatabase db = new WordDbHelper(this).getReadableDatabase();
         Cursor c =db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME +
-                " ORDER BY " + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 50", null);
-        while (c.moveToNext()) {
-            Log.i("graf", c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)) + " "
-                    + c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)));
+                " ORDER BY " + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC", null);
+        JSONObject jo = new JSONObject();
+        int all = 0;
+        for (String s : Categories.categories) {
+            int count = 0;
+            c.moveToFirst();
+            do {
+                String cats = c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_CATEGORIES));
+                String[] pole = cats.split(";");
+                List<String> list = Arrays.asList(pole);
+                if (list.contains(s)) {
+                    count++;
+                }
+            } while (c.moveToNext());
+            all += count;
+            try {
+                jo.put(s, count);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        Log.i("asdf", all + "");
+        int maxLogSize = 1000;
+        for(int i = 0; i <= jo.toString().length() / maxLogSize; i++) {
+            int start = i * maxLogSize;
+            int end = (i+1) * maxLogSize;
+            end = end > jo.toString().length() ? jo.toString().length() : end;
+            Log.v("asdf", jo.toString().substring(start, end));
         }
         c.close();
         db.close();
