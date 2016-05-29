@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fancy="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--<Space-->
+    <!--android:id="@+id/space"-->
+    <!--android:layout_width="120dp"-->
+    <!--android:layout_height="15dp"-->
+    <!--android:layout_alignParentEnd="true"-->
+    <!--android:layout_alignParentRight="true"-->
+    <!--android:layout_marginEnd="15dp"-->
+    <!--android:layout_marginRight="15dp"-->
+    <!--android:layout_marginTop="?attr/actionBarSize"/>-->
+
+    <!--<com.github.rahatarmanahmed.cpv.CircularProgressView-->
+    <!--android:id="@+id/skill_progress"-->
+    <!--android:layout_width="100dp"-->
+    <!--android:layout_height="100dp"-->
+    <!--android:layout_alignParentEnd="true"-->
+    <!--android:layout_alignParentRight="true"-->
+    <!--android:layout_below="@+id/space"-->
+    <!--android:layout_marginEnd="15dp"-->
+    <!--android:layout_marginRight="15dp"-->
+    <!--app:cpv_animAutostart="true"-->
+    <!--app:cpv_color="?attr/colorAccent"-->
+    <!--app:cpv_indeterminate="false"/>-->
+
+    <!--<TextView-->
+    <!--android:id="@+id/skill"-->
+    <!--android:layout_width="100dp"-->
+    <!--android:layout_height="100dp"-->
+    <!--android:layout_alignParentEnd="true"-->
+    <!--android:layout_alignParentRight="true"-->
+    <!--android:layout_below="@id/space"-->
+    <!--android:layout_marginEnd="15dp"-->
+    <!--android:layout_marginRight="15dp"-->
+    <!--android:gravity="center"-->
+    <!--android:text="10"-->
+    <!--android:textColor="#000000"-->
+    <!--android:textSize="45sp"/>-->
+    <TextView
+        android:id="@+id/skill_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:minWidth="230dp"
+        android:padding="10dp"
+        android:text="Vaše úroveň"
+        android:textColor="#000000"
+        android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/correct_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/skill_text"
+        android:minWidth="230dp"
+        android:padding="10dp"
+        android:text="Počet správných odpovědí"
+        android:textColor="#000000"
+        android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/incorrect_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/correct_text"
+        android:minWidth="230dp"
+        android:padding="10dp"
+        android:text="Počet nesprávných odpovědí"
+        android:textColor="#000000"
+        android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/skill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/skill_text"
+        android:padding="10dp"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:textColor="#000000"
+        android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/correct"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/skill_text"
+        android:layout_toRightOf="@id/correct_text"
+        android:padding="10dp"
+        android:textColor="#000000"
+        android:textSize="15sp"/>
+
+    <TextView
+        android:id="@+id/incorrect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/correct_text"
+        android:layout_toRightOf="@id/incorrect_text"
+        android:padding="10dp"
+        android:textColor="#000000"
+        android:textSize="15sp"/>
+
+    <Button
+        android:id="@+id/button_help"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="160dp"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="15dp"
+        android:layout_marginRight="15dp"
+        android:text="Nápověda"
+        android:textAllCaps="false"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/button_settings"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="160dp"
+        android:layout_height="72dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginBottom="15dp"
+        android:layout_marginLeft="15dp"
+        android:text="Nastavení"
+        android:textAllCaps="false"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/button_start"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="160dp"
+        android:layout_height="72dp"
+        android:layout_above="@id/button_help"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="15dp"
+        android:text="Start"
+        android:textAllCaps="false"
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/delete_db"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:onClick="deleteDb"
+        android:visibility="visible"
+        android:text="deleteDB"/>
+</RelativeLayout>
+
