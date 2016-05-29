@@ -37,7 +37,7 @@ public class StatisticsActivity extends AppCompatActivity {
             setTitle("Mapa znalostí");
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Mapa znalostí")
-                    .setMessage("Slovní zásoba je zde uspořádaná podle akutální obtížnosti a rozdělena na 20 částí." +
+                    .setMessage("Slovní zásoba je zde uspořádaná podle aktuální obtížnosti a rozdělena na 20 částí." +
                             " Jsou zde uvedeny příklady z každé dvacetiny a vpravo je přibližná předpokladaná " +
                             "šance na správnou odpověď na slova z dané části. Po kliknutí se zobrazí detail" +
                             " dané sekce.")

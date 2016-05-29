@@ -104,26 +104,26 @@ public class MainFragment extends Fragment {
         }
         WordDbHelper helper = new WordDbHelper(getActivity());
         SQLiteDatabase db = helper.getReadableDatabase();
-//        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME + " ORDER BY " +
-//                WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " ASC", null);
-//        float sum = 0.0f;
-//        int count = c.getCount();
-//        while (c.moveToNext()) {
-//            sum += 1 / (1 + (float) Math.exp(-(getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0f)
+//        Cursor c = db.rawQuery("SELECT * FROM "
+//                + WordContract.WordEntry.TABLE_NAME + " ORDER BY "
+//                + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null);
+//        float chance = 0;
+//        if (c.moveToFirst()) {
+//            chance = 1 / (1 + (float) Math.exp(-(getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0)
 //                    - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)))));
 //        }
-//        mSkill.setText(String.format("%.0f%%", (sum / (float) count) * 100));
+//        mSkill.setText(String.format(Locale.getDefault(), "%.0f%%", chance * 100));
+
         Cursor c = db.rawQuery("SELECT * FROM "
                 + WordContract.WordEntry.TABLE_NAME + " ORDER BY "
-                + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 1", null);
+                + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC LIMIT 317", null);
         float chance = 0;
-        if (c.moveToFirst()) {
-            chance = 1 / (1 + (float) Math.exp(-(getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0)
+        float sum = 0;
+        while (c.moveToNext()) {
+            sum += 1 / (1 + (float) Math.exp(-(getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0)
                     - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)))));
         }
-//        Log.i("skill", "" + getActivity().getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0));
-//        Log.i("skill", "" + c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)));
-//        Log.i("skill", "" + c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)));
+        chance = sum / 317;
         mSkill.setText(String.format(Locale.getDefault(), "%.0f%%", chance * 100));
 
         c.close();

@@ -13,6 +13,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,11 +49,27 @@ public class LearnedWordsFragment extends Fragment implements TextToSpeech.OnIni
     private ResultsAdapter mResultsAdapter;
     private TextToSpeech tts;
 
+    private int count;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         tts = new TextToSpeech(getActivity(), this);
+        setHasOptionsMenu(true);
     }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_revising, menu);
+        MenuItem item = menu.getItem(0);
+        SQLiteDatabase db = new WordDbHelper(getActivity()).getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.LearnedWordEntry.TABLE_NAME, null);
+        item.setTitle(c.getCount() + " z 6353");
+        c.close();
+        db.close();
+
+    }
+
 
     @Nullable
     @Override

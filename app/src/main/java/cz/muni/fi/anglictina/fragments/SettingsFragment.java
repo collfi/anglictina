@@ -64,11 +64,13 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             }
         });
 
+
         Preference about = findPreference("pref_about");
         about.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Toast.makeText(getActivity(), "Zatím nic.", Toast.LENGTH_SHORT).show();
+                AboutFragment dialog = new AboutFragment();
+                dialog.show(getFragmentManager(), "feedback");
                 return true;
             }
         });
@@ -98,7 +100,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             CheckBoxPreference cbp = (CheckBoxPreference) pref;
             if (key.equals("pref_sounds") && !cbp.isChecked()) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle("Přehrávaní slov");
+                builder.setTitle("Přehrávání slov");
                 builder.setMessage("Automatické přehrávání vypnuto. Přehrávání je stále dostpuné při " +
                         "dlouhém podržení na anglické slovo.");
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -157,7 +159,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements
             View view = getActivity().getLayoutInflater().inflate(R.layout.dialog_feedback, null);
             message = (EditText) view.findViewById(R.id.message);
             builder.setView(view);
-            builder.setMessage("Prosím, podělte se o svou spětnou vazbu. Je to důležité.");
+            builder.setMessage("Prosím, podělte se o svou zpětnou vazbu. Je to důležité.");
             builder.setPositiveButton("Odeslat", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {

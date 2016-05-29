@@ -63,7 +63,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
     public static final long INTERVAL = 86400;//24 hours
     public static final long DAY_MILISECONDS = 86400000;
     //        public static final long INTERVAL = 10;//10 sec
-    public static final float DEFAULT_WORD_COEFFICIENT = 2.5f;
+    public static final float DEFAULT_WORD_COEFFICIENT = 2.2f;
     private float mSkill;
     private Button a;
     private Button b;
@@ -407,7 +407,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 repeatingIncorrect = true;
                 loadIncorrect();
             } else {
-                endSession();
+                endSession(true);
             }
             return;
         }
@@ -435,8 +435,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
 //        getDistractorsSimilarDifficultySimilarCategory();
 //        getDistractorsSimilarDifficultySameCategoryClosestLevenshtein();
 //        getDistractorsSimilarDifficultyClosestLevenshtein();
-        getDistractorsSimilarDifficultySameCategory();
+//        getDistractorsSimilarDifficultySameCategory();
 //        getDistractorsSameCategory();
+        getDistractorsFinal();
         mWords.add(mCurrentWord);
         direction = getDirection();
         if (direction == 0) { //direction en-cz
@@ -483,6 +484,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             tts.stop();
             tts.shutdown();
         }
+
     }
 
     /**
@@ -1048,6 +1050,11 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
                 + "%\""
                 + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 40", null);
         fromCursorToWords(cursor);
+        if (cursor.getCount() < 10) {
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 10", null);
+        }
+        fromCursorToWords(cursor);
         cursor.close();
         Collections.shuffle(mWords);
         mWords = mWords.subList(0, 3);
@@ -1066,6 +1073,12 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         } while (cursor.getCount() < 10);
 
         fromCursorToWords(cursor);
+        if (cursor.getCount() < 10) {
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 10", null);
+        }
+        fromCursorToWords(cursor);
+
         cursor.close();
         Collections.shuffle(mWords);
         Collections.sort(mWords, new WordLevenshteinComparator());
@@ -1087,6 +1100,13 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         } while (cursor.getCount() < 10);
 
         fromCursorToWords(cursor);
+        if (cursor.getCount() < 10) {
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 10", null);
+        }
+        fromCursorToWords(cursor);
+
+
         cursor.close();
 
         Collections.sort(mWords, new WordLevenshteinComparator());
@@ -1149,6 +1169,46 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         cursor.close();
         Collections.shuffle(mWords);
         mWords = mWords.subList(0, 3);
+    }
+
+    public void getDistractorsFinal() {
+        Cursor cursor;
+        cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + arrayToString(mCurrentWord.getCategories())
+                + "%\" ORDER BY RANDOM() LIMIT 40", null);
+        fromCursorToWords(cursor);
+        if (mWords.size() < 10) {
+            cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                    + " WHERE " + WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%" + mCurrentWord.getCategories()[0]
+                    + "%\" ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 30", null);
+            fromCursorToWords(cursor);
+            if (mWords.size() < 8) {
+                cursor = mWordsDb.rawQuery("SELECT * FROM " + WordEntry.TABLE_NAME
+                        + " ORDER BY ABS(" + WordEntry.COLUMN_NAME_DIFFICULTY + " - " + mSkill + ") LIMIT 20", null);
+                fromCursorToWords(cursor);
+            }
+        }
+
+        cursor.close();
+        if (mCurrentWord.getWord().length() < 8) {
+            Collections.shuffle(mWords);
+            mWords = mWords.subList(0, 3);
+        } else {
+            Collections.sort(mWords, new WordLevenshteinComparator());
+            List<Word> helper = new ArrayList<>(mWords);
+            mWords.clear();
+            for (Word w : helper) {
+                if (w.getLevenshteinToCurrent() < mCurrentWord.getWord().length() / 2) {
+                    mWords.add(w);
+                }
+            }
+            helper.removeAll(mWords);
+            if (mWords.size() < 3) {
+                Collections.shuffle(helper);
+                mWords.addAll(helper.subList(0, 3));
+            }
+            mWords = mWords.subList(0, 3);
+        }
     }
 
     public void fromCursorToWords(Cursor cursor) {
@@ -1271,6 +1331,7 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
             if (getArguments() != null) {
                 correct = getArguments().getBoolean("correct");
             }
+
         }
 
         @Override
@@ -1383,29 +1444,32 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         return mWord;
     }
 
-    public void endSession() {
+    public void endSession(boolean streak) {
         Results r = new Results();
         r.res = new ArrayList<>(results);
         getFragmentManager().popBackStack();
         Fragment f = ResultsFragment.newInstance(r);
         getFragmentManager().beginTransaction().add(R.id.learning_layout, f, "results").commit();
 
-        SharedPreferences streakPref = getActivity().getSharedPreferences("streak", Context.MODE_PRIVATE);
-        float daysSinceNow = ((float) System.currentTimeMillis() + TimeZone.getDefault()
-                .getOffset(System.currentTimeMillis())) / DAY_MILISECONDS;
-        float daysSinceLast = ((float) streakPref.getLong("last_set", 0L)) / DAY_MILISECONDS;
-        int days = (int) daysSinceNow - (int) daysSinceLast;
-        if (days == 1) {
-            streakPref.edit().putInt("current", streakPref.getInt("current", 0) + 1).commit();
-        } else if (streakPref.getInt("current", 0) == 0) {
-            streakPref.edit().putInt("current", 1).commit();
-        }
+        if (streak) {
+            SharedPreferences streakPref = getActivity().getSharedPreferences("streak", Context.MODE_PRIVATE);
+            float daysSinceNow = ((float) System.currentTimeMillis() + TimeZone.getDefault()
+                    .getOffset(System.currentTimeMillis())) / DAY_MILISECONDS;
+            float daysSinceLast = ((float) streakPref.getLong("last_set", 0L)) / DAY_MILISECONDS;
+            int days = (int) daysSinceNow - (int) daysSinceLast;
+            if (days == 1) {
+                streakPref.edit().putInt("current", streakPref.getInt("current", 0) + 1).commit();
+            } else if (streakPref.getInt("current", 0) == 0) {
+                streakPref.edit().putInt("current", 1).commit();
+            }
 
-        if (streakPref.getInt("current", 0) > streakPref.getInt("record", 0)) {
-            streakPref.edit().putInt("record", streakPref.getInt("current", 0)).commit();
+            if (streakPref.getInt("current", 0) > streakPref.getInt("record", 0)) {
+                streakPref.edit().putInt("record", streakPref.getInt("current", 0)).commit();
+            }
+            streakPref.edit().putLong("last_set", System.currentTimeMillis() + TimeZone.getDefault()
+                    .getOffset(System.currentTimeMillis())).apply();
         }
-        streakPref.edit().putLong("last_set", System.currentTimeMillis() + TimeZone.getDefault()
-                .getOffset(System.currentTimeMillis())).apply();
+        results.clear();
     }
 
     public void saveToPost(boolean correct, int selected, float diffChange) {
@@ -1563,5 +1627,9 @@ public class LearningFragment extends Fragment implements TextToSpeech.OnInitLis
         }
 
 
+    }
+
+    public boolean showResults() {
+        return !results.isEmpty();
     }
 }

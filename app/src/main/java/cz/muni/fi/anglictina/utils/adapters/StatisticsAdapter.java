@@ -43,6 +43,16 @@ public class StatisticsAdapter extends BaseExpandableListAdapter {
         //todo catch exception ak sa nepodari posun cursoru
         for (int i = 0; i < 20; i++) {
             float chance = 0f;
+            for (int j = 0; j < 317; j++) {
+                c.moveToPosition(i * 317 + j);
+                chance += 1 / (1 + (float) Math.exp(-(mContext.getSharedPreferences("stats", Context.MODE_PRIVATE).getFloat("skill", 0)
+                        - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)))));
+            }
+            chances.add((int) ((chance * 100) / 317));
+        }
+        c.moveToFirst();
+        for (int i = 0; i < 20; i++) {
+            float chance = 0f;
             words.add("");
             translations.add("");
             difficulties.add("");
@@ -60,7 +70,7 @@ public class StatisticsAdapter extends BaseExpandableListAdapter {
                         - c.getFloat(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_DIFFICULTY)))));
                 divider = ", ";
             }
-            chances.add((int) ((chance * 100) / 5));
+//            chances.add((int) ((chance * 100) / 5));
         }
         c.close();
         db.close();

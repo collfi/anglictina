@@ -2,10 +2,13 @@ package cz.muni.fi.anglictina.activities;
 
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 
 import cz.muni.fi.anglictina.App;
 import cz.muni.fi.anglictina.R;
+import cz.muni.fi.anglictina.fragments.LearningFragment;
 
 public class LearnActivity extends AppCompatActivity {
 
@@ -38,14 +41,20 @@ public class LearnActivity extends AppCompatActivity {
         App.activityPaused();
     }
 
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()) {
-//            // Respond to the action bar's Up/Home button
-//            case android.R.id.home:
-//                NavUtils.navigateUpFromSameTask(this);
-//                return true;
-//        }
-//        return super.onOptionsItemSelected(item);
-//    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                LearningFragment f = (LearningFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.learning_fragment);
+                if (f != null && f.showResults()) {
+                    f.endSession(false);
+                } else {
+                    NavUtils.navigateUpFromSameTask(this);
+                }
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }

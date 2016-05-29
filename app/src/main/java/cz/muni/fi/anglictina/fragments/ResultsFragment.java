@@ -1,11 +1,14 @@
 package cz.muni.fi.anglictina.fragments;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.annotation.Nullable;
@@ -259,9 +262,19 @@ public class ResultsFragment extends Fragment implements TextToSpeech.OnInitList
                     return 1;
                 }
                 JSONObject data = new JSONObject();
-                WifiManager manager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
-                WifiInfo info = manager.getConnectionInfo();
-                String address = info.getMacAddress();
+                long user = mContext.getSharedPreferences("userInfo", Context.MODE_PRIVATE).getLong("user", 0);
+                String address = "";
+                boolean perm = true;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    perm = getActivity().checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
+                }
+                if (user == 0 && perm) {
+                    WifiManager manager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+                    WifiInfo info = manager.getConnectionInfo();
+                    address = info.getMacAddress();
+                } else {
+                    address = String.valueOf(user);
+                }
                 data.put("results", resultsArray);
                 data.put("user", address);
                 Log.i("post output", data.toString());

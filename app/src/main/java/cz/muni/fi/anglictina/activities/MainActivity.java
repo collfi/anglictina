@@ -12,8 +12,6 @@ import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +22,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.Pair;
 import android.view.MenuItem;
@@ -50,6 +47,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import cz.muni.fi.anglictina.App;
 import cz.muni.fi.anglictina.BuildConfig;
@@ -57,6 +55,7 @@ import cz.muni.fi.anglictina.R;
 import cz.muni.fi.anglictina.db.WordContract;
 import cz.muni.fi.anglictina.db.WordDbHelper;
 import cz.muni.fi.anglictina.db.model.Word;
+import cz.muni.fi.anglictina.fragments.AboutFragment;
 import cz.muni.fi.anglictina.fragments.SettingsFragment;
 import cz.muni.fi.anglictina.utils.Categories;
 import cz.muni.fi.anglictina.utils.receivers.AlarmReceiver;
@@ -96,7 +95,7 @@ public class MainActivity extends AppCompatActivity
         if (!getDatabasePath("words.db").exists()) {
             if (!BuildConfig.DEBUG) {
                 pd = new ProgressDialog(this);
-                pd.setMessage("Update databázy. Čekejte prosím...");
+                pd.setMessage("Update databáze. Čekejte prosím...");
                 pd.setCanceledOnTouchOutside(false);
                 pd.setCancelable(false);
                 pd.show();
@@ -162,20 +161,6 @@ public class MainActivity extends AppCompatActivity
         }
 
 
-//        SQLiteDatabase a = new WordDbHelper(this).getWritableDatabase();
-//        String[] d= {"%valentine's%"};//        Cursor c = a.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME
-//        + " WHERE " + WordContract.WordEntry.COLUMN_NAME_CATEGORIES + " LIKE \"%valentine's%\"", null);
-//        if (c.moveToFirst()) {
-//            Log.i("zxcv", c.getString(c.getColumnIndexOrThrow(WordContract.WordEntry.COLUMN_NAME_WORD)) + " slovo");
-//        } else {
-//            Log.i("zxcv", "NOT FIRST");
-//        }
-//         c.close();
-//        a.close();
-//
-//        Integer b = 20;
-//        b = 30 + 20  + 40 + 60;
-//        b.equals(20);
     }
 
     @Override
@@ -208,7 +193,8 @@ public class MainActivity extends AppCompatActivity
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         } else if (id == R.id.nav_about) {
-            Toast.makeText(this, "Zatím nic.", Toast.LENGTH_SHORT).show();
+            AboutFragment dialog = new AboutFragment();
+            dialog.show(getSupportFragmentManager(), "feedback");
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.learning_layout);
@@ -240,7 +226,7 @@ public class MainActivity extends AppCompatActivity
 //        }
 
         SQLiteDatabase db = new WordDbHelper(this).getReadableDatabase();
-        Cursor c =db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME +
+        Cursor c = db.rawQuery("SELECT * FROM " + WordContract.WordEntry.TABLE_NAME +
                 " ORDER BY " + WordContract.WordEntry.COLUMN_NAME_DIFFICULTY + " DESC", null);
         JSONObject jo = new JSONObject();
         int all = 0;
@@ -264,9 +250,9 @@ public class MainActivity extends AppCompatActivity
         }
         Log.i("asdf", all + "");
         int maxLogSize = 1000;
-        for(int i = 0; i <= jo.toString().length() / maxLogSize; i++) {
+        for (int i = 0; i <= jo.toString().length() / maxLogSize; i++) {
             int start = i * maxLogSize;
-            int end = (i+1) * maxLogSize;
+            int end = (i + 1) * maxLogSize;
             end = end > jo.toString().length() ? jo.toString().length() : end;
             Log.v("asdf", jo.toString().substring(start, end));
         }
@@ -283,15 +269,14 @@ public class MainActivity extends AppCompatActivity
         protected Void doInBackground(Void... params) {
             try {
                 StringBuilder sb = new StringBuilder();
-                WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-                WifiInfo info = manager.getConnectionInfo();
-                String address = info.getMacAddress();
-                TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+
+                Random r = new Random(System.nanoTime());
+                SharedPreferences user = getSharedPreferences("userInfo", Context.MODE_PRIVATE);
+                user.edit().putLong("user", r.nextLong()).commit();
 
                 sb.append("Device: ").append(Build.MANUFACTURER).append(" ").append(Build.DEVICE)
                         .append(" Android version: ").append(Build.VERSION.RELEASE)
-                        .append(" ").append(address)
-                        .append(" ").append(telephonyManager.getDeviceId())
+                        .append(" ").append(getSharedPreferences("userInfo", Context.MODE_PRIVATE).getLong("user", 0))
                         .append(" Time: ").append(System.currentTimeMillis());
                 String data = sb.toString();
                 Log.i("post output", data);
@@ -531,7 +516,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(Integer integer) {
             try {
-                for (int i = 0; i < testGraph.length(); i ++) {
+                for (int i = 0; i < testGraph.length(); i++) {
 //                    Log.i("zxcv", testGraph.getJSONObject(i).getLong("time") + " " +testGraph.getJSONObject(i).getDouble("skill"));
                     Log.i("zxcv", testGraph.getJSONObject(i).getString("current") + ' ' + testGraph.getJSONObject(i).getDouble("diff_change"));
                 }
